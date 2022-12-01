@@ -1,5 +1,5 @@
 //! A shader that renders a mesh multiple times in one draw call.
-
+//!
 use bevy::{
     core_pipeline::core_3d::Transparent3d,
     ecs::{
