@@ -4,10 +4,6 @@ I am hoping to port this to Web Assembly (WASM) to be hosted on [my website](htt
 
 ---
 
-![Twitter URL](https://img.shields.io/twitter/url?label=Twitter&style=social&url=https%3A%2F%2Ftwitter.com%2FLew___)
-
----
-
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/lew-morris/3d-cellular-automata#license)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/lew-morris/3d-cellular-automata)
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/lew-morris/3d-cellular-automata/main)
