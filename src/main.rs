@@ -1,13 +1,13 @@
 use std::{fmt, io::stdin};
 
 fn main() {
-    let my_first_cell = SimpleCell {
-        position: (1, 2, 3),
-        alive: true,
-        states: 5,
-        neighbours: 5,
-    };
-    println!("Original Cell\n-------------\n{}", my_first_cell);
+    // let my_first_cell = SimpleCell {
+    //     position: (1, 2, 3),
+    //     alive: true,
+    //     states: 5,
+    //     neighbours: 5,
+    // };
+    // println!("Original Cell\n-------------\n{}", my_first_cell);
     let mut cell_list: Vec<SimpleCell> = Vec::new();
     println!("Enter bounds size: ");
 
