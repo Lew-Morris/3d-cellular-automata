@@ -1,103 +1,101 @@
+mod rule;
+
 use std::{fmt, io::stdin};
+use crate::rule::Rule;
 
 fn main() {
-    // let my_first_cell = SimpleCell {
-    //     position: (1, 2, 3),
-    //     alive: true,
-    //     states: 5,
-    //     neighbours: 5,
-    // };
-    // println!("Original Cell\n-------------\n{}", my_first_cell);
-    let mut cell_list: Vec<SimpleCell> = Vec::new();
-    println!("Enter bounds size: ");
+    let states: u8 = 5;
+    let current_rule: Rule = Rule::new(states); // New rule with default values
 
-    // User chooses bounds size
+    // User chooses BOUNDS size
+    println!("Enter BOUNDS size [1-512]: ");
     let mut input_bounds: String = String::new();
     stdin()
         .read_line(&mut input_bounds)
         .expect("Failed to read input");
 
-    let bounds: i32 = input_bounds.trim().parse::<i32>().expect("Input not a number");
+     let bounds: i32 = input_bounds
+        .trim()
+        .parse::<i32>()
+        .expect("Input not a number");
 
     // Input validation
     if bounds > 512 { panic!("Bounds are too large!") }
     else if bounds < 0 { panic!("Bounds cannot be negative!") }
+    else if bounds == 0 { panic!("Bounds cannot be zero!") }
 
-    for z in 0..bounds {
-        for y in 0..bounds {
-            for x in 0..bounds {
-                cell_list.push(SimpleCell::new(x, y, z, 5, 0))
-            }
-        }
-    }
-    let count = cell_list.iter().count();
-    println!("Total cells: {}", count)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 struct SimpleCell {
-    position: (i32, i32, i32),
-    alive: bool,
-    states: i32,
-    neighbours: i32,
+    value: u8,
+    neighbours: u8,
+}
+
+struct SingleThreaded {
+    cells: Vec<SimpleCell>,
+    bounds: i32,
+}
+
+#[derive(Clone, Copy)]
+struct Position {
+    x: i32,
+    y: i32,
+    z: i32,
+}
+
+impl Position {
+    pub fn new() -> Position {
+        Position {
+            x: 0,
+            y: 0,
+            z: 0,
+        }
+    }
 }
 
 impl SimpleCell {
-    pub fn new(x: i32, y: i32, z: i32, states: i32, neighbours: i32) -> SimpleCell {
-        SimpleCell {
-            position: (x, y, z),
-            alive: true,
-            states,
-            neighbours,
+    pub fn dead(self) -> bool {
+        self.value == 0
+    }
+}
+
+impl SingleThreaded {
+    pub fn new() -> Self {
+        SingleThreaded {
+            cells: vec![],
+            bounds: 0,
         }
     }
-    // pub fn get_position(&self) ->(i32, i32, i32) {
-    //     self.position
-    // }
-    //
-    // pub fn get_alive(&self) -> bool {
-    //     self.alive
-    // }
-    //
-    // pub fn get_states(&self) -> i32 {
-    //     self.states
-    // }
-    //
-    // pub fn get_neighbours(&self) -> i32 {
-    //     self.neighbours
-    // }
 
-    // pub fn set_position(&mut self, position: (i32, i32, i32)) {
-    //     self.position = position;
-    // }
-    //
-    // pub fn set_alive(&mut self, alive: bool) {
-    //     self.alive = alive;
-    // }
-    //
-    // pub fn set_states(&mut self, states: i32){
-    //     self.states = states;
-    // }
-    //
-    // pub fn set_neighbours(&mut self, neighbours: i32) {
-    //     self.neighbours = neighbours;
-    // }
-}
+    pub fn set_bounds(&mut self, bounds: i32) -> i32 {
+        if bounds != self.bounds {
+            self.cells.clear();
+            self.cells.resize(
+                (bounds.pow(3)) as usize,
+                SimpleCell { value: 0, neighbours: 0});
+            self.bounds = bounds;
+        }
+        self.bounds
+    }
 
-impl fmt::Display for SimpleCell {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Position: {}, {}, {}\nAlive: {}\nStates: {}\nNeighbours: {}\n",
-               self.position.0, self.position.1, self.position.2, self.alive, self.states, self.neighbours)
+    pub fn count_cells(&self) -> usize {
+        let mut result = 0;
+        for cell in &self.cells {
+            if !cell.dead() {
+                result += 1;
+            }
+        }
+        result
+    }
+
+    fn update_neighbours(&mut self, rule: &Rule, index: usize) {
+
     }
 }
 
 
-// struct Position {
-//     x: i32,
-//     y: i32,
-//     z: i32,
-// }
-
+//
 // impl fmt::Display for Position {
 //     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 //         write!(f, "{}, {}, {}", self.x, self.y, self.z)
