@@ -1,11 +1,13 @@
-mod rule;
+// mod rule;
+// mod tests;
+mod simple_cell;
 
-use std::{fmt, io::stdin};
-use crate::rule::Rule;
+use std::{io::stdin};
+use crate::simple_cell::SingleThreaded;
 
 fn main() {
-    let states: u8 = 5;
-    let current_rule: Rule = Rule::new(states); // New rule with default values
+    // let states: u8 = 5;
+    // let current_rule: Rule = Rule::new(states); // New rule with default values
 
     // User chooses BOUNDS size
     println!("Enter BOUNDS size [1-512]: ");
@@ -24,76 +26,62 @@ fn main() {
     else if bounds < 0 { panic!("Bounds cannot be negative!") }
     else if bounds == 0 { panic!("Bounds cannot be zero!") }
 
-}
+    // Instantiate SingleThreaded
+    let mut cells: SingleThreaded = SingleThreaded::new();
+    cells.set_bounds(bounds);
+    let cell_count = cells.count_cells();
 
-#[derive(Clone, Copy)]
-struct SimpleCell {
-    value: u8,
-    neighbours: u8,
-}
+    println!("There are {} live cells", cell_count);
 
-struct SingleThreaded {
-    cells: Vec<SimpleCell>,
-    bounds: i32,
-}
+    // A simple loop to test the `is_boundary` method
+    loop {
+        // Request input from user
+        println!("Enter in a cell's position: ");
+        let mut input: String = String::new();
+        stdin()
+            .read_line(&mut input)
+            .expect("Failed to read input");
 
-#[derive(Clone, Copy)]
-struct Position {
-    x: i32,
-    y: i32,
-    z: i32,
-}
+        // Parse and store input as i32 (32-bit integer)
+        let position: i32 = input
+            .trim()
+            .parse::<i32>()
+            .expect("Input was not a number");
 
-impl Position {
-    pub fn new() -> Position {
-        Position {
-            x: 0,
-            y: 0,
-            z: 0,
-        }
-    }
-}
-
-impl SimpleCell {
-    pub fn dead(self) -> bool {
-        self.value == 0
-    }
-}
-
-impl SingleThreaded {
-    pub fn new() -> Self {
-        SingleThreaded {
-            cells: vec![],
-            bounds: 0,
+        // Validate input
+        if position - 1 > bounds.pow(3) - 1 { panic!("Position out of bounds - The maximum value was {}", bounds.pow(3)) }
+        else if position - 1 < 0 { panic!("Position out of bounds - too small!") }
+        else {
+            // Output the specified cell's properties (Value/ Boundary)
+            cells.print_cell(position as usize);
+            println!("Boundary Cell: {}", is_boundary(bounds as usize, position as usize))
         }
     }
 
-    pub fn set_bounds(&mut self, bounds: i32) -> i32 {
-        if bounds != self.bounds {
-            self.cells.clear();
-            self.cells.resize(
-                (bounds.pow(3)) as usize,
-                SimpleCell { value: 0, neighbours: 0});
-            self.bounds = bounds;
-        }
-        self.bounds
-    }
-
-    pub fn count_cells(&self) -> usize {
-        let mut result = 0;
-        for cell in &self.cells {
-            if !cell.dead() {
-                result += 1;
-            }
-        }
-        result
-    }
-
-    fn update_neighbours(&mut self, rule: &Rule, index: usize) {
-
-    }
 }
 
+
+
+// Check if the cell is on the boundary using the index
+fn is_boundary(bounds: usize, index: usize) -> bool {
+    // todo! Return the type of boundary
+    let size = bounds.pow(3);
+    match index {
+        // first layer
+        index if index < bounds * bounds => true,
+        // last layer
+        index if index >= size - (bounds * bounds) => true,
+        // first column
+        index if index % bounds == 0 => true,
+        // last column
+        index if index % bounds == bounds - 1 => true,
+        // first slice
+        index if index % (bounds * bounds) < bounds => true,
+        // last slice
+        index if index % (bounds * bounds) >= bounds * (bounds - 1) => true,
+        _ => false,
+    }
+}
 
 //
 // impl fmt::Display for Position {
@@ -101,3 +89,4 @@ impl SingleThreaded {
 //         write!(f, "{}, {}, {}", self.x, self.y, self.z)
 //     }
 // }
+
