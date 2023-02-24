@@ -1,4 +1,4 @@
-// use crate::rule::Rule;
+use crate::rule::Rule;
 
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -6,7 +6,7 @@ use std::fmt::{Display, Formatter};
 #[derive(Clone, Copy)]
 struct SimpleCell {
     value: u8,
-    // neighbours: u8,
+    neighbours: u8,
 }
 
 impl SimpleCell {
@@ -46,27 +46,33 @@ impl SingleThreaded {
             self.cells.resize(
                 (bounds.pow(3)) as usize,
                 // SimpleCell { value: 0, neighbours: 0});
-                SimpleCell { value: 0 });
+                SimpleCell { value: 0, neighbours: 0 });
             self.bounds = bounds;
         }
         self.bounds
     }
 
     // Count the number of live cells
-    pub fn count_cells(&self) -> usize {
-        let mut result = 0;
+    pub fn count_cells(&self, all: bool) -> usize {
+        let mut result: usize = 0;
         // Loop through all the cells
         for cell in &self.cells {
             // Increment if the cell is not dead
-            if !cell.dead() {
+            if !cell.dead() | all {
                 result += 1;
             }
         }
         result
     }
 
-    // Update the values of the neighbours if the cell dies
+    // todo! Cells need to be stored in a 3D vector
+    // pub fn count_neighbours(&self) -> {
+    //
+    // }
+
+    // // Update the values of the neighbours if the cell dies
     // fn update_neighbours(&mut self, rule: &Rule, index: usize) {
+    //
     // }
 }
 
