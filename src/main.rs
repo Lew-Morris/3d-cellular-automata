@@ -1,15 +1,18 @@
-// mod rule;
+mod rule;
 // mod tests;
 mod simple_cell;
+mod neighbours;
+// mod tests;
 
 use std::{io::stdin};
+use crate::neighbours::Neighbourhood;
 use crate::simple_cell::SingleThreaded;
 
 fn main() {
     // let states: u8 = 5;
     // let current_rule: Rule = Rule::new(states); // New rule with default values
 
-    // User chooses BOUNDS size
+    // Choose bounds size
     println!("Enter BOUNDS size [1-512]: ");
     let mut input_bounds: String = String::new();
     stdin()
@@ -29,7 +32,7 @@ fn main() {
     // Instantiate SingleThreaded
     let mut cells: SingleThreaded = SingleThreaded::new();
     cells.set_bounds(bounds);
-    let cell_count = cells.count_cells();
+    let cell_count = cells.count_all_cells();
 
     println!("There are {} live cells", cell_count);
 
@@ -59,8 +62,6 @@ fn main() {
     }
 
 }
-
-
 
 // Check if the cell is on the boundary using the index
 fn is_boundary(bounds: usize, index: usize) -> bool {
