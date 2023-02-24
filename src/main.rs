@@ -1,5 +1,4 @@
 mod rule;
-// mod tests;
 mod simple_cell;
 mod neighbours;
 // mod tests;
@@ -13,7 +12,7 @@ fn main() {
     // let current_rule: Rule = Rule::new(states); // New rule with default values
 
     // Choose bounds size
-    println!("Enter BOUNDS size [1-512]: ");
+    println!("Enter bounds size [1-512]: ");
     let mut input_bounds: String = String::new();
     stdin()
         .read_line(&mut input_bounds)
@@ -32,7 +31,7 @@ fn main() {
     // Instantiate SingleThreaded
     let mut cells: SingleThreaded = SingleThreaded::new();
     cells.set_bounds(bounds);
-    let cell_count = cells.count_all_cells();
+    let cell_count = cells.count_cells(true);
 
     println!("There are {} live cells", cell_count);
 
