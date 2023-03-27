@@ -11,3 +11,4 @@ bevy_egui = "0.20.1"
 bytemuck = "*"
 rand = "*"
 futures-lite = "1.12.0"
+
