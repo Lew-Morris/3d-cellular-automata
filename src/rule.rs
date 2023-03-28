@@ -25,12 +25,18 @@ impl Value {
 
     #[allow(dead_code)]
     pub fn in_range(&self, value: u8) -> bool {
-        self.0[value as usize]
+        // self.0[value as usize]
+        // *self.0.get(value as usize).unwrap_or(&false)
+        if (value as usize) < self.0.len() {
+            *self.0.get(value as usize).unwrap()
+        } else {
+            false
+        }
     }
 
-    pub fn in_range_incorrect(&self, value: u8) -> bool {
-        *self.0.get(value as usize).unwrap_or(&false)
-    }
+    // pub fn in_range_incorrect(&self, value: u8) -> bool {
+    //     *self.0.get(value as usize).unwrap_or(&false)
+    // }
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -45,7 +51,7 @@ pub struct Rule {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ColorMethod {
     Single,
-    StateLerp,
+    State,
     DistToCenter,
     Neighbour,
 }
@@ -62,14 +68,14 @@ impl ColorMethod {
     ) -> Color {
         match self {
             ColorMethod::Single => c1,
-            ColorMethod::StateLerp => {
+            ColorMethod::State => {
                 let dt = state as f32 / states as f32;
-                helper::lerp_color(c1, c2, dt)
+                helper::state_colour(c1, c2, dt)
             }
-            ColorMethod::DistToCenter => helper::lerp_color(c1, c2, dist_to_center),
+            ColorMethod::DistToCenter => helper::state_colour(c1, c2, dist_to_center),
             ColorMethod::Neighbour => {
                 let dt = neighbours as f32 / 26f32;
-                helper::lerp_color(c1, c2, dt)
+                helper::state_colour(c1, c2, dt)
             }
         }
     }

@@ -1,6 +1,6 @@
-use crate::cell_render::InstanceData;
+use crate::render::InstanceData;
 use crate::{
-    cell_render::{CellRenderer, InstanceMaterialData},
+    render::{CellRenderer, InstanceMaterialData},
     cells::Sim,
     helper,
     neighbours::Neighbourhood,
@@ -17,9 +17,9 @@ use bevy_egui::{egui, EguiContexts};
 pub struct Example {
     pub name: String,
     pub rule: Rule,
-    pub color_method: ColorMethod,
-    pub color1: Color,
-    pub color2: Color,
+    pub colour_method: ColorMethod,
+    pub colour1: Color,
+    pub colour2: Color,
 }
 
 #[derive(Resource)]
@@ -79,9 +79,9 @@ impl Sims {
     pub fn set_example(&mut self, index: usize) {
         let example = self.examples[index].clone();
         let rule = example.rule;
-        self.color_method = example.color_method;
-        self.color1 = example.color1;
-        self.color2 = example.color2;
+        self.color_method = example.colour_method;
+        self.color1 = example.colour1;
+        self.color2 = example.colour2;
 
         if self.active_sim < self.sims.len() {
             let sim = &mut self.sims[self.active_sim].1;
@@ -104,7 +104,7 @@ pub fn update(
     let mut bounds = current.bounds;
     let mut active_sim = current.active_sim;
 
-    egui::Window::new("Celluar!").show(contexts.ctx_mut(), |ui| {
+    egui::Window::new("Settings").show(contexts.ctx_mut(), |ui| {
         let old_bounds = bounds;
         let old_active = active_sim;
 
@@ -134,10 +134,10 @@ pub fn update(
                 update_dt / cell_count.max(1) as u32
             ));
 
-            if ui.button("reset").clicked() {
+            if ui.button("Reset").clicked() {
                 sim.reset();
             }
-            if ui.button("spawn noise").clicked() {
+            if ui.button("Spawn noise").clicked() {
                 sim.spawn_noise(&rule);
             }
 
@@ -151,18 +151,21 @@ pub fn update(
             current.rule = Some(rule);
         }
 
-        ui.add_space(24.0);
+        ui.add_space(32.0);
 
         ui.label("Rules:");
         {
-            egui::ComboBox::from_label("color method")
+            egui::ComboBox::from_label("Colouring")
                 .selected_text(format!("{:?}", current.color_method))
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut current.color_method, ColorMethod::Single, "Single");
                     ui.selectable_value(
                         &mut current.color_method,
-                        ColorMethod::StateLerp,
-                        "State Lerp",
+                        ColorMethod::Single,
+                        "Single");
+                    ui.selectable_value(
+                        &mut current.color_method,
+                        ColorMethod::State,
+                        "State",
                     );
                     ui.selectable_value(
                         &mut current.color_method,

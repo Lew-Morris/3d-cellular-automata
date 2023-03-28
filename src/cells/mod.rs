@@ -1,6 +1,11 @@
-use crate::cell_render::CellRenderer;
-use crate::rule::Rule;
-use bevy::tasks::TaskPool;
+use bevy::{
+    tasks::TaskPool
+};
+
+use crate::{
+    rule::Rule,
+    render::CellRenderer
+};
 
 pub trait Sim: Send + Sync {
     fn update(&mut self, rule: &Rule, task_pool: &TaskPool);
@@ -24,4 +29,4 @@ pub trait Sim: Send + Sync {
 pub mod sims;
 pub use sims::*;
 
-pub(crate) mod simple_cell;
+pub mod simple_cell;

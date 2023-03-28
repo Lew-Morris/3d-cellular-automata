@@ -38,8 +38,8 @@ use bevy::{
         system::SystemParamItem,
     }
 };
+use bevy::render::RenderSet;
 use bytemuck::{Pod, Zeroable};
-// use crate::helper;
 
 #[derive(Component, Deref)]
 pub struct InstanceMaterialData(pub Vec<InstanceData>);
@@ -54,18 +54,17 @@ impl ExtractComponent for InstanceMaterialData {
     }
 }
 
-pub struct CellMaterialPlugin;
+pub struct CustomMaterialPlugin;
 
-impl Plugin for CellMaterialPlugin {
+impl Plugin for CustomMaterialPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(ExtractComponentPlugin::<InstanceMaterialData>::default());
         app.sub_app_mut(RenderApp)
             .add_render_command::<Transparent3d, DrawCustom>()
-            .init_resource::<CellPipeline>()
-            .init_resource::<SpecializedMeshPipelines<CellPipeline>>()
-            .insert_resource(Msaa::default())
-            .add_system(queue_custom)
-            .add_system(prepare_instance_buffers);
+            .init_resource::<CustomPipeline>()
+            .init_resource::<SpecializedMeshPipelines<CustomPipeline>>()
+            .add_system(queue_custom.in_set(RenderSet::Queue))
+            .add_system(prepare_instance_buffers.in_set(RenderSet::Prepare));
     }
 }
 
@@ -78,11 +77,11 @@ pub struct InstanceData {
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn queue_custom(
+fn queue_custom(
     transparent_3d_draw_functions: Res<DrawFunctions<Transparent3d>>,
-    custom_pipeline: Res<CellPipeline>,
+    custom_pipeline: Res<CustomPipeline>,
     msaa: Res<Msaa>,
-    mut pipelines: ResMut<SpecializedMeshPipelines<CellPipeline>>,
+    mut pipelines: ResMut<SpecializedMeshPipelines<CustomPipeline>>,
     pipeline_cache: Res<PipelineCache>,
     meshes: Res<RenderAssets<Mesh>>,
     material_meshes: Query<(Entity, &MeshUniform, &Handle<Mesh>), With<InstanceMaterialData>>,
@@ -90,7 +89,6 @@ pub fn queue_custom(
 ) {
     let draw_custom = transparent_3d_draw_functions.read().id::<DrawCustom>();
 
-    // let msaa = Msaa::Sample2; //todo! Add a slider for this
     let msaa_key = MeshPipelineKey::from_msaa_samples(msaa.samples());
 
     for (view, mut transparent_phase) in &mut views {
@@ -125,40 +123,40 @@ fn prepare_instance_buffers(
     query: Query<(Entity, &InstanceMaterialData)>,
     render_device: Res<RenderDevice>,
 ) {
-    for (entity, instance_data) in query.iter() {
+    for (entity, instance_data) in &query {
         let buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
             label: Some("instance data buffer"),
-            contents: bytemuck::cast_slice(instance_data.0.as_slice()),
+            contents: bytemuck::cast_slice(instance_data.as_slice()),
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         });
         commands.entity(entity).insert(InstanceBuffer {
             buffer,
-            length: instance_data.0.len(),
+            length: instance_data.len(),
         });
     }
 }
 
 #[derive(Resource)]
-pub struct CellPipeline {
+pub struct CustomPipeline {
     shader: Handle<Shader>,
     mesh_pipeline: MeshPipeline,
 }
 
-impl FromWorld for CellPipeline {
+impl FromWorld for CustomPipeline {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
-        let shader = asset_server.load("shaders/cell.wgsl");
+        let shader = asset_server.load("shaders/instancing.wgsl");
 
         let mesh_pipeline = world.resource::<MeshPipeline>();
 
-        CellPipeline {
+        CustomPipeline {
             shader,
             mesh_pipeline: mesh_pipeline.clone(),
         }
     }
 }
 
-impl SpecializedMeshPipeline for CellPipeline {
+impl SpecializedMeshPipeline for CustomPipeline {
     type Key = MeshPipelineKey;
 
     fn specialize(
@@ -185,11 +183,6 @@ impl SpecializedMeshPipeline for CellPipeline {
             ],
         });
         descriptor.fragment.as_mut().unwrap().shader = self.shader.clone();
-        descriptor.layout = vec![
-            self.mesh_pipeline.view_layout.clone(),
-            self.mesh_pipeline.mesh_layout.clone(),
-        ];
-
         Ok(descriptor)
     }
 }
@@ -201,9 +194,8 @@ type DrawCustom = (
     DrawMeshInstanced,
 );
 
-// https://bevyengine.org/examples/shader/shader-instancing/
-
 pub struct DrawMeshInstanced;
+
 impl<P: PhaseItem> RenderCommand<P> for DrawMeshInstanced {
     type Param = SRes<RenderAssets<Mesh>>;
     type ViewWorldQuery = ();
@@ -217,9 +209,6 @@ impl<P: PhaseItem> RenderCommand<P> for DrawMeshInstanced {
         meshes: SystemParamItem<'w, '_, Self::Param>,
         pass: &mut TrackedRenderPass<'w>,
     ) -> RenderCommandResult {
-        // let mesh_handle = mesh_query.get(item).unwrap();
-        // let instance_buffer = instance_buffer_query.get(item).unwrap();
-
         let gpu_mesh = match meshes.into_inner().get(mesh_handle) {
             Some(gpu_mesh) => gpu_mesh,
             None => return RenderCommandResult::Failure,
@@ -273,19 +262,8 @@ impl CellRenderer {
         }
     }
 
-    // pub fn clear(&mut self) {
-    //     self.values.truncate(0);
-    //     self.values.resize(self.cell_count(), 0);
-    //     self.neighbors.truncate(0);
-    //     self.neighbors.resize(self.cell_count(), 0);
-    // }
-
     pub fn set(&mut self, index: usize, value: u8, neighbors: u8) {
         self.values[index] = value;
         self.neighbors[index] = neighbors;
     }
-
-    // pub fn set_pos(&mut self, pos: IVec3, value: u8, neighbors: u8) {
-    //     self.set(helper::pos_to_idx(pos, self.bounds), value, neighbors);
-    // }
 }

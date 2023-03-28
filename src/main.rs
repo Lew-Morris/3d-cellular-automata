@@ -1,28 +1,31 @@
-// First-Party
-// Modules
+use rotating_camera::{
+    RotatingCameraPlugin,
+    RotatingCamera
+};
+
+use bevy_egui::{EguiPlugin};
+use bevy::{
+    prelude::*,
+    render::view::NoFrustumCulling,
+    // diagnostic::{
+    //     FrameTimeDiagnosticsPlugin,
+    //     LogDiagnosticsPlugin
+    // }
+};
+use cells::sims::Example;
+use neighbours::Neighbourhood::*;
+use crate::cells::Sims;
 pub mod cell_event;
-mod cell_render;
+use crate::cell_event::CellStatesChangedEvent;
+mod render;
+use render::*;
 mod helper;
 mod neighbours;
 mod rotating_camera;
 mod rule;
-mod cells;
-// mod setup;
-
-// Imports
-use cell_render::*;
-use neighbours::Neighbourhood::*;
 use rule::*;
-use cell_event::CellStatesChangedEvent;
-use cells::sims::Example;
-use crate::cells::Sims;
-// use setup::*;
+mod cells;
 
-// Third-Party
-// Imports
-use rotating_camera::{RotatingCamera, RotatingCameraPlugin}; //todo! Implement rotating camera
-use bevy::{prelude::*, render::view::NoFrustumCulling};
-use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
 fn main() {
     let mut task_pool_settings = TaskPoolOptions::default();
@@ -37,18 +40,23 @@ fn main() {
         .insert_resource(ClearColor(Color::rgb(0.9f32, 0.9f32, 0.9f32))) // Background color
         .add_event::<CellStatesChangedEvent>()
         .add_plugin(RotatingCameraPlugin)
-        .add_plugin(CellMaterialPlugin)
+        .add_plugin(CustomMaterialPlugin)
         .add_plugin(cells::SimsPlugin)
-        .add_startup_system(configure_visuals_system)
-        .add_startup_system( setup)
+        // .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(LogDiagnosticsPlugin::default())
+        .add_startup_system(setup)
         .run();
 }
-
 fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims: ResMut<Sims>) {
     sims.add_sim(
         "Simple Cell".into(),
         Box::new(cells::simple_cell::SingleThreaded::new()),
     );
+
+    // sims.add_sim(
+    //     "(Unsafe) - Atomic Cell".into(),
+    //     Box::new(cells::simple_cell::LeddooAtomic::new()),
+    // );
 
     sims.add_example(Example {
         name: "Builder".into(),
@@ -56,11 +64,11 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims: Res
             survival_rule: Value::new(&[2, 6, 9]),
             birth: Value::new(&[4, 6, 8, 9, 10]),
             states: 10,
-            neighbourhood: VonNeumann,
+            neighbourhood: Moore,
         },
-        color_method: ColorMethod::DistToCenter,
-        color1: Color::YELLOW,
-        color2: Color::RED,
+        colour_method: ColorMethod::DistToCenter,
+        colour1: Color::YELLOW,
+        colour2: Color::RED,
     });
 
     sims.add_example(Example {
@@ -72,29 +80,30 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims: Res
             neighbourhood: VonNeumann,
         },
 
-        color_method: ColorMethod::DistToCenter,
-        color1: Color::GREEN,
-        color2: Color::BLUE,
+        colour_method: ColorMethod::DistToCenter,
+        colour1: Color::GREEN,
+        colour2: Color::BLUE,
     });
 
     sims.set_example(0);
 
     commands.spawn((
         meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-        // SpatialBundle::INHERITED_IDENTITY,
         Transform::from_xyz(0.0, 0.0, 15.0),
         GlobalTransform::default(),
-        InstanceMaterialData (
-            (1..=10)
-                .flat_map(|x| (1..=100).map(move |y| (x as f32 / 10.0, y as f32 / 10.0)))
-                .map(|(x, y)| InstanceData {
-                    position: Vec3::new(x * 10.0 - 5.0, y * 10.0 - 5.0, 0.0),
-                    scale: 1.0,
-                    color: Color::hsla(x * 360., y, 0.5, 1.0).as_rgba_f32(),
-                })
-                .collect(),
-        ),
-        Visibility::Visible,
+        InstanceMaterialData(Vec::new()),
+        // InstanceMaterialData
+        //     (
+        //     (1..=10)
+        //         .flat_map(|x| (1..=100).map(move |y| (x as f32 / 10.0, y as f32 / 10.0)))
+        //         .map(|(x, y)| InstanceData {
+        //             position: Vec3::new(x * 10.0 - 5.0, y * 10.0 - 5.0, 0.0),
+        //             scale: 1.0,
+        //             color: Color::hsla(x * 360., y, 0.5, 1.0).as_rgba_f32(),
+        //         })
+        //         .collect(),
+        // ),
+        Visibility::default(),
         ComputedVisibility::default(),
         NoFrustumCulling,
     ));
@@ -105,11 +114,4 @@ fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims: Res
         ..default()
     })
         .insert(RotatingCamera::default());
-}
-
-fn configure_visuals_system(mut contexts: EguiContexts) {
-    contexts.ctx_mut().set_visuals(egui::Visuals {
-        window_rounding: 0.0.into(),
-        ..Default::default()
-    });
 }

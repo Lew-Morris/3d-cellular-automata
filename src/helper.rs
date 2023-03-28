@@ -65,7 +65,7 @@ pub fn dist_to_centre(cell_pos: IVec3, bounds: i32) -> f32 {
     cell_pos.as_vec3().length() / max
 }
 
-pub fn lerp_color(color_1: Color, color_2: Color, dt: f32) -> Color {
+pub fn state_colour(color_1: Color, color_2: Color, dt: f32) -> Color {
     let color_1: Vec4 = color_1.into();
     let color_2: Vec4 = color_2.into();
     let dt = dt.clamp(0.0, 1.0);

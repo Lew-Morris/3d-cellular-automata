@@ -1,9 +1,13 @@
-use crate::{cell_render::CellRenderer, helper, rule::Rule};
+use crate::{
+    render::CellRenderer,
+    rule::Rule,
+    helper,
+};
 
-use crate::cells::Sim;
-use bevy::{math::IVec3, tasks::TaskPool};
-// use std::fmt;
-// use std::fmt::{Display, Formatter};
+use bevy::{
+    math::IVec3,
+    tasks::TaskPool
+};
 
 #[derive(Clone, Copy)]
 struct SimpleCell {
@@ -13,7 +17,7 @@ struct SimpleCell {
 
 impl SimpleCell {
     // Return `true` if the cell has value 0
-    pub fn dead(self) -> bool {
+    pub fn is_dead(self) -> bool {
         self.value == 0
     }
 }
@@ -31,17 +35,6 @@ impl SingleThreaded {
         }
     }
 
-    // pub fn print_cell(&self, index: usize) {
-    //     if self.cells[index - 1].dead() {
-    //         print!("DEAD ");
-    //     }
-    //     println!(
-    //         "Cell #{} \n--------\nValue: {}",
-    //         index,
-    //         self.cells[index - 1]
-    //     );
-    // }
-
     // Set the boundary for cells
     pub fn set_bounds(&mut self, new_bounds: i32) -> i32 {
         // Check if bounds has changed
@@ -50,7 +43,7 @@ impl SingleThreaded {
             self.cells.clear();
             // Initialise vector of cells, with length bounds^3
             self.cells.resize(
-                (new_bounds.pow(3)) as usize,
+                (new_bounds*new_bounds*new_bounds) as usize,
                 SimpleCell {
                     value: 0,
                     neighbours: 0,
@@ -68,7 +61,7 @@ impl SingleThreaded {
         // Loop through each
         for cell in &self.cells {
             // Increment if the cell is not dead
-            if !cell.dead() {
+            if !cell.is_dead() {
                 result += 1;
             }
         }
@@ -92,10 +85,10 @@ impl SingleThreaded {
         for dir in rule.neighbourhood.get_neighbourhood_iter() {
             let neighbour_position = self.wrap(pos + *dir);
             let index = self.pos_to_idx(neighbour_position);
-
             if inc {
                 self.cells[index].neighbours += 1;
-            } else {
+            }
+            else {
                 self.cells[index].neighbours -= 1;
             }
         }
@@ -106,13 +99,13 @@ impl SingleThreaded {
         let mut deaths = vec![];
 
         for (index, cell) in self.cells.iter_mut().enumerate() {
-            if cell.dead() {
-                if rule.birth.in_range_incorrect(cell.neighbours) {
+            if cell.is_dead() {
+                if rule.birth.in_range(cell.neighbours) {
                     cell.value = rule.states;
                     spawns.push(index);
                 }
             } else {
-                if cell.value < rule.states || !rule.survival_rule.in_range_incorrect(cell.neighbours) {
+                if cell.value < rule.states || !rule.survival_rule.in_range(cell.neighbours) {
                     if cell.value == rule.states {
                         deaths.push(index);
                     }
@@ -144,7 +137,6 @@ impl SingleThreaded {
                     neighbours += 1;
                 }
             }
-
             assert_eq!(neighbours, self.cells[index].neighbours);
         }
     }
@@ -152,7 +144,7 @@ impl SingleThreaded {
     pub fn spawn_noise(&mut self, rule: &Rule) {
         helper::generate_noise_default(helper::centre(self.bounds), |pos| {
             let index = self.pos_to_idx(self.wrap(pos));
-            if self.cells[index].dead() {
+            if self.cells[index].is_dead() {
                 self.cells[index].value = rule.states;
                 self.update_neighbours(rule, index, true);
             }
@@ -160,9 +152,9 @@ impl SingleThreaded {
     }
 }
 
-impl Sim for SingleThreaded {
+impl crate::cells::Sim for SingleThreaded {
     fn update(&mut self, rule: &Rule, _task_pool: &TaskPool) {
-        self.update(&rule);
+        self.update(rule);
     }
 
     fn render(&self, renderer: &mut CellRenderer) {
@@ -187,26 +179,3 @@ impl Sim for SingleThreaded {
         self.set_bounds(new_bounds)
     }
 }
-
-// impl Display for SimpleCell {
-//     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-//         write!(f, "{}", self.value)
-//     }
-// }
-
-// #[derive(Clone, Copy)]
-// struct Position {
-//     x: i32,
-//     y: i32,
-//     z: i32,
-// }
-
-// impl Position {
-//     pub fn new() -> Position {
-//         Position {
-//             x: 0,
-//             y: 0,
-//             z: 0,
-//         }
-//     }
-// }
