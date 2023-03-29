@@ -17,7 +17,7 @@ pub fn generate_noise<F: FnMut(IVec3)>(centre: IVec3, radius: i32, amount: usize
 }
 
 pub fn generate_noise_default<F: FnMut(IVec3)>(centre: IVec3, f: F) {
-    generate_noise(centre, 6, 12 * 12 * 12, f)
+    generate_noise(centre, 10, 10 * 10 * 10, f)
 }
 
 pub fn idx_to_pos(index: usize, bounds: i32) -> IVec3 {
@@ -29,7 +29,12 @@ pub fn idx_to_pos(index: usize, bounds: i32) -> IVec3 {
 }
 
 pub fn pos_to_idx(pos: IVec3, bounds: i32) -> usize {
-    (pos.x + (pos.y * bounds) + (pos.z * bounds * bounds)) as usize
+    // (pos.x + (pos.y * bounds) + (pos.z * bounds * bounds)) as usize
+    let x = pos.x as usize;
+    let y = pos.y as usize;
+    let z = pos.z as usize;
+    let bounds = bounds as usize;
+    x + y*bounds + z*bounds*bounds
 }
 
 pub fn centre(bounds: i32) -> IVec3 {
