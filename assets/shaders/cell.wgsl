@@ -1,3 +1,4 @@
+// Source: Bevy examples - https://github.com/bevyengine/bevy/blob/main/assets/shaders/instancing.wgsl
 #import bevy_pbr::mesh_types
 #import bevy_pbr::mesh_view_bindings
 
