@@ -1,3 +1,4 @@
+// Source: Bevy Examples (GitHub) - https://github.com/bevyengine/bevy/blob/main/examples/shader/shader_instancing.rs
 use bevy::{
     pbr::{
         SetMeshBindGroup,
@@ -145,7 +146,7 @@ pub struct CustomPipeline {
 impl FromWorld for CustomPipeline {
     fn from_world(world: &mut World) -> Self {
         let asset_server = world.resource::<AssetServer>();
-        let shader = asset_server.load("shaders/instancing.wgsl");
+        let shader = asset_server.load("shaders/cell.wgsl");
 
         let mesh_pipeline = world.resource::<MeshPipeline>();
 
