@@ -1,18 +1,17 @@
+use crate::render::InstanceData;
+use crate::{
+    render::{CellRenderer, InstanceMaterialData},
+    cells::Sim,
+    utilities,
+    neighbours::Neighbourhood,
+    rule::{ColorMethod, Rule},
+};
+use bevy::prelude::Resource;
 use bevy::{
     prelude::{Color, Plugin, Query, ResMut},
     tasks::AsyncComputeTaskPool,
 };
-use bevy::prelude::Resource;
 use bevy_egui::{egui, EguiContexts};
-
-use crate::{
-    cells::Sim,
-    helper,
-    neighbours::Neighbourhood,
-    render::{CellRenderer, InstanceMaterialData},
-    rule::{ColorMethod, Rule},
-};
-use crate::render::InstanceData;
 
 #[derive(Clone)]
 pub struct Example {
@@ -142,13 +141,12 @@ pub fn update(
                 sim.spawn_noise(&rule);
             }
 
-            ui.add(egui::Slider::new(&mut bounds, 32..=128).text("bounding size"));
+            ui.add(egui::Slider::new(&mut bounds, 32..=128).text("Bounding size"));
             if bounds != old_bounds {
                 bounds = sim.set_bounds(bounds);
                 sim.spawn_noise(&rule);
                 current.renderer.as_mut().unwrap().set_bounds(bounds);
             }
-
             current.rule = Some(rule);
         }
 
@@ -177,6 +175,11 @@ pub fn update(
                         &mut current.color_method,
                         ColorMethod::Neighbour,
                         "Neighbors",
+                    );
+                    ui.selectable_value(
+                        &mut current.color_method,
+                        ColorMethod::Index,
+                        "Index",
                     );
                 });
 
@@ -239,9 +242,9 @@ pub fn update(
         let neighbors = renderer.neighbors[index];
 
         if value != 0 {
-            let pos = helper::idx_to_pos(index, bounds);
+            let pos = utilities::idx_to_pos(index, bounds);
             instance_data.push(InstanceData {
-                position: (pos - helper::centre(bounds)).as_vec3(),
+                position: (pos - utilities::centre(bounds)).as_vec3(),
                 scale: 1.0,
                 color: current
                     .color_method
@@ -251,7 +254,10 @@ pub fn update(
                         rule.states,
                         value,
                         neighbors,
-                        helper::dist_to_centre(pos, bounds),
+                        utilities::dist_to_centre(pos, bounds),
+                        index,
+                        renderer.cell_count(),
+
                     )
                     .into(),
             });
