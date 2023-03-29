@@ -3,7 +3,6 @@ use bevy::{
     prelude::Color,
 };
 use rand::Rng;
-// use std::ops::RangeInclusive;
 
 pub fn generate_noise<F: FnMut(IVec3)>(centre: IVec3, radius: i32, amount: usize, mut f: F) {
     let mut rand = rand::thread_rng();
@@ -33,19 +32,6 @@ pub fn pos_to_idx(pos: IVec3, bounds: i32) -> usize {
     (pos.x + (pos.y * bounds) + (pos.z * bounds * bounds)) as usize
 }
 
-// pub fn get_bound_range(
-//     bounds: i32,
-// ) -> (
-//     RangeInclusive<i32>,
-//     RangeInclusive<i32>,
-//     RangeInclusive<i32>,
-// ) {
-//     let range_x = 0..=bounds - 1;
-//     let range_y = 0..=bounds - 1;
-//     let range_z = 0..=bounds - 1;
-//     (range_x, range_y, range_z)
-// }
-
 pub fn centre(bounds: i32) -> IVec3 {
     let centre: i32 = bounds / 2;
     ivec3(centre, centre, centre)
@@ -54,10 +40,6 @@ pub fn centre(bounds: i32) -> IVec3 {
 pub fn wrap(pos: IVec3, bounds: i32) -> IVec3 {
     (pos + bounds) % bounds
 }
-
-// pub fn in_bounds(pos: IVec3, bounds: i32) -> bool {
-//     pos.x < bounds && pos.y < bounds && pos.z < bounds
-// }
 
 pub fn dist_to_centre(cell_pos: IVec3, bounds: i32) -> f32 {
     let cell_pos = cell_pos - centre(bounds);

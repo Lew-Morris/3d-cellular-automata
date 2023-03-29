@@ -1,7 +1,8 @@
-use bevy::prelude::Color;
 use std::ops::RangeInclusive;
-use crate::{helper, neighbours::Neighbourhood};
 
+use bevy::prelude::Color;
+
+use crate::{helper, neighbours::Neighbourhood};
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Value([bool; 27]);
