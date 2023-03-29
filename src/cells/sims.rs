@@ -1,17 +1,18 @@
-use crate::render::InstanceData;
-use crate::{
-    render::{CellRenderer, InstanceMaterialData},
-    cells::Sim,
-    helper,
-    neighbours::Neighbourhood,
-    rule::{ColorMethod, Rule},
-};
-use bevy::prelude::Resource;
 use bevy::{
     prelude::{Color, Plugin, Query, ResMut},
     tasks::AsyncComputeTaskPool,
 };
+use bevy::prelude::Resource;
 use bevy_egui::{egui, EguiContexts};
+
+use crate::{
+    cells::Sim,
+    helper,
+    neighbours::Neighbourhood,
+    render::{CellRenderer, InstanceMaterialData},
+    rule::{ColorMethod, Rule},
+};
+use crate::render::InstanceData;
 
 #[derive(Clone)]
 pub struct Example {
@@ -44,7 +45,7 @@ impl Sims {
         Sims {
             sims: vec![],
             active_sim: usize::MAX,
-            bounds: 32,
+            bounds: 64,
             update_dt: std::time::Duration::from_secs(0),
             renderer: Some(Box::new(CellRenderer::new())),
             rule: None,

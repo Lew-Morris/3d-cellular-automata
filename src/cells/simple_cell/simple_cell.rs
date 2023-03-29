@@ -1,12 +1,12 @@
-use crate::{
-    render::CellRenderer,
-    rule::Rule,
-    helper,
-};
-
 use bevy::{
     math::IVec3,
     tasks::TaskPool
+};
+
+use crate::{
+    helper,
+    render::CellRenderer,
+    rule::Rule,
 };
 
 #[derive(Clone, Copy)]
