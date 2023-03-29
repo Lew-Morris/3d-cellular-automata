@@ -4,7 +4,7 @@ use bevy::{
 };
 
 use crate::{
-    helper,
+    utilities,
     render::CellRenderer,
     rule::Rule,
 };
@@ -43,13 +43,13 @@ impl SingleThreaded {
             self.cells.clear();
             // Initialise vector of cells, with length bounds^3
             self.cells.resize(
-                (new_bounds*new_bounds*new_bounds) as usize,
+                (new_bounds.pow(3)) as usize,
                 SimpleCell {
                     value: 0,
                     neighbours: 0,
                 },
             );
-            // vec!(vec!(SimpleCell { value: 0, neighbours: 0 })));
+            vec!(vec!(SimpleCell { value: 0, neighbours: 0 }));
             self.bounds = new_bounds;
         }
         self.bounds
@@ -69,15 +69,15 @@ impl SingleThreaded {
     }
 
     fn idx_to_pos(&self, index: usize) -> IVec3 {
-        helper::idx_to_pos(index, self.bounds)
+        utilities::idx_to_pos(index, self.bounds)
     }
 
     fn pos_to_idx(&self, position: IVec3) -> usize {
-        helper::pos_to_idx(position, self.bounds)
+        utilities::pos_to_idx(position, self.bounds)
     }
 
     fn wrap(&self, pos: IVec3) -> IVec3 {
-        helper::wrap(pos, self.bounds)
+        utilities::wrap(pos, self.bounds)
     }
 
     fn update_neighbours(&mut self, rule: &Rule, index: usize, inc: bool) {
@@ -95,6 +95,7 @@ impl SingleThreaded {
     }
 
     pub fn update(&mut self, rule: &Rule) {
+        // todo! If paused, return
         let mut spawns = vec![];
         let mut deaths = vec![];
 
@@ -142,7 +143,7 @@ impl SingleThreaded {
     }
 
     pub fn spawn_noise(&mut self, rule: &Rule) {
-        helper::generate_noise_default(helper::centre(self.bounds), |pos| {
+        utilities::generate_noise_default(utilities::centre(self.bounds), |pos| {
             let index = self.pos_to_idx(self.wrap(pos));
             if self.cells[index].is_dead() {
                 self.cells[index].value = rule.states;
