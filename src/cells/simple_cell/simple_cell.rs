@@ -16,10 +16,17 @@ struct SimpleCell {
 }
 
 impl SimpleCell {
+    fn new() -> SimpleCell {
+        SimpleCell {
+            value: 0,
+            neighbours: 0,
+        }
+    }
     // Return `true` if the cell has value 0
     pub fn is_dead(self) -> bool {
         self.value == 0
     }
+
 }
 
 pub struct SingleThreaded {
@@ -44,12 +51,9 @@ impl SingleThreaded {
             // Initialise vector of cells, with length bounds^3
             self.cells.resize(
                 (new_bounds.pow(3)) as usize,
-                SimpleCell {
-                    value: 0,
-                    neighbours: 0,
-                },
+                SimpleCell::new(),
             );
-            vec!(vec!(SimpleCell { value: 0, neighbours: 0 }));
+            // vec!(vec!(SimpleCell { value: 0, neighbours: 0 }));
             self.bounds = new_bounds;
         }
         self.bounds
@@ -69,7 +73,7 @@ impl SingleThreaded {
     }
 
     fn idx_to_pos(&self, index: usize) -> IVec3 {
-        utilities::idx_to_pos(index, self.bounds)
+        utilities::idx_to_pos(index as i32, self.bounds)
     }
 
     fn pos_to_idx(&self, position: IVec3) -> usize {
@@ -95,7 +99,7 @@ impl SingleThreaded {
     }
 
     pub fn update(&mut self, rule: &Rule) {
-        // todo! If paused, return
+        // todo! If paused, return - Currently requires a const value
         let mut spawns = vec![];
         let mut deaths = vec![];
 
@@ -124,26 +128,26 @@ impl SingleThreaded {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn validate(&self, rule: &Rule) {
-        for index in 0..self.cells.len() {
-            let pos = self.idx_to_pos(index);
-
-            let mut neighbours = 0;
-            for dir in rule.neighbourhood.get_neighbourhood_iter() {
-                let neighbour_pos = self.wrap(pos + *dir);
-
-                let index = self.pos_to_idx(neighbour_pos);
-                if self.cells[index].value == rule.states {
-                    neighbours += 1;
-                }
-            }
-            assert_eq!(neighbours, self.cells[index].neighbours);
-        }
-    }
+    // #[allow(dead_code)]
+    // pub fn validate(&self, rule: &Rule) {
+    //     for index in 0..self.cells.len() {
+    //         let pos = self.idx_to_pos(index);
+    //
+    //         let mut neighbours = 0;
+    //         for dir in rule.neighbourhood.get_neighbourhood_iter() {
+    //             let neighbour_pos = self.wrap(pos + *dir);
+    //
+    //             let index = self.pos_to_idx(neighbour_pos);
+    //             if self.cells[index].value == rule.states {
+    //                 neighbours += 1;
+    //             }
+    //         }
+    //         assert_eq!(neighbours, self.cells[index].neighbours);
+    //     }
+    // }
 
     pub fn spawn_noise(&mut self, rule: &Rule) {
-        utilities::generate_noise_default(utilities::centre(self.bounds), |pos| {
+        utilities::default_noise(utilities::centre(self.bounds), |pos| {
             let index = self.pos_to_idx(self.wrap(pos));
             if self.cells[index].is_dead() {
                 self.cells[index].value = rule.states;
@@ -168,11 +172,11 @@ impl crate::cells::Sim for SingleThreaded {
         self.spawn_noise(rule);
     }
 
-    fn cell_count(&self) -> usize {
+    fn get_count(&self) -> usize {
         self.count_cells()
     }
 
-    fn bounds(&self) -> i32 {
+    fn get_bounds(&self) -> i32 {
         self.bounds
     }
 
