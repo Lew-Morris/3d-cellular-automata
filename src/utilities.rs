@@ -1,10 +1,14 @@
 use bevy::{
-    math::{ivec3, IVec3, Vec4},
+    math::{
+        ivec3,
+        IVec3,
+        Vec4
+    },
     prelude::Color,
 };
 use rand::Rng;
 
-pub fn generate_noise<F: FnMut(IVec3)>(centre: IVec3, radius: i32, amount: usize, mut f: F) {
+pub fn noise_gen<F: FnMut(IVec3)>(centre: IVec3, radius: i32, amount: usize, mut f: F) {
     let mut rand = rand::thread_rng();
     (0..amount).for_each(|_| {
         f(centre
@@ -16,11 +20,11 @@ pub fn generate_noise<F: FnMut(IVec3)>(centre: IVec3, radius: i32, amount: usize
     });
 }
 
-pub fn generate_noise_default<F: FnMut(IVec3)>(centre: IVec3, f: F) {
-    generate_noise(centre, 10, 10 * 10 * 10, f)
+pub fn default_noise<F: FnMut(IVec3)>(centre: IVec3, f: F) {
+    noise_gen(centre, 15, 10 * 10 * 10, f)
 }
 
-pub fn idx_to_pos(index: usize, bounds: i32) -> IVec3 {
+pub fn idx_to_pos(index: i32, bounds: i32) -> IVec3 {
     ivec3(
         index as i32 % bounds,
         index as i32 / bounds & bounds,
@@ -28,13 +32,13 @@ pub fn idx_to_pos(index: usize, bounds: i32) -> IVec3 {
     )
 }
 
-pub fn pos_to_idx(pos: IVec3, bounds: i32) -> usize {
-    // (pos.x + (pos.y * bounds) + (pos.z * bounds * bounds)) as usize
-    let x = pos.x as usize;
-    let y = pos.y as usize;
-    let z = pos.z as usize;
-    let bounds = bounds as usize;
-    x + y*bounds + z*bounds*bounds
+pub fn pos_to_idx(position: IVec3, bounds: i32) -> usize {
+    (position.x + (position.y * bounds) + (position.z * bounds * bounds)) as usize
+    // let x = pos.x as usize;
+    // let y = pos.y as usize;
+    // let z = pos.z as usize;
+    // let bounds = bounds as usize;
+    // x + y*bounds + z*bounds*bounds
 }
 
 pub fn centre(bounds: i32) -> IVec3 {
@@ -42,19 +46,19 @@ pub fn centre(bounds: i32) -> IVec3 {
     ivec3(centre, centre, centre)
 }
 
-pub fn wrap(pos: IVec3, bounds: i32) -> IVec3 {
-    (pos + bounds) % bounds
+pub fn wrap(position: IVec3, bounds: i32) -> IVec3 {
+    (position + bounds) % bounds
 }
 
-pub fn dist_to_centre(cell_pos: IVec3, bounds: i32) -> f32 {
-    let cell_pos = cell_pos - centre(bounds);
+pub fn get_dist_to_centre(position: IVec3, bounds: i32) -> f32 {
+    let pos = position - centre(bounds);
     let max = bounds as f32 / 2.0;
-    cell_pos.as_vec3().length() / max
+    pos.as_vec3().length() / max
 }
 
-pub fn state_colour(color_1: Color, color_2: Color, dt: f32) -> Color {
-    let color_1: Vec4 = color_1.into();
-    let color_2: Vec4 = color_2.into();
-    let dt = dt.clamp(0.0, 1.0);
-    ((1.0 - dt) * color_1 + dt * color_2).into()
+pub fn state_colour(colour1: Color, colour2: Color, distance: f32) -> Color {
+    let c1: Vec4 = colour1.into();
+    let c2: Vec4 = colour2.into();
+    let dtc = distance.clamp(0.0, 1.0);
+    ((1.0 - dtc) * c1 + dtc * c2).into()
 }
