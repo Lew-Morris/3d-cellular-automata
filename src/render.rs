@@ -93,12 +93,11 @@ fn queue_custom(
     let msaa_key = MeshPipelineKey::from_msaa_samples(msaa.samples());
 
     for (view, mut transparent_phase) in &mut views {
-        let view_key = msaa_key | MeshPipelineKey::from_hdr(view.hdr);
         let rangefinder = view.rangefinder3d();
         for (entity, mesh_uniform, mesh_handle) in &material_meshes {
             if let Some(mesh) = meshes.get(mesh_handle) {
                 let key =
-                    view_key | MeshPipelineKey::from_primitive_topology(mesh.primitive_topology);
+                    msaa_key | MeshPipelineKey::from_primitive_topology(mesh.primitive_topology);
                 let pipeline = pipelines
                     .specialize(&pipeline_cache, &custom_pipeline, key, &mesh.layout)
                     .unwrap();
@@ -145,10 +144,14 @@ pub struct CustomPipeline {
 
 impl FromWorld for CustomPipeline {
     fn from_world(world: &mut World) -> Self {
+        // let world = world.cell();
         let asset_server = world.resource::<AssetServer>();
         let shader = asset_server.load("shaders/cell.wgsl");
 
         let mesh_pipeline = world.resource::<MeshPipeline>();
+        // let mesh_layout = &world.resource::<MeshPipeline>().mesh_layout.clone();
+        // let view_layout = &world.resource::<MeshPipeline>().view_layout.clone();
+        // let layout: Vec<BindGroupLayout> = vec![view_layout.clone(), mesh_layout.clone()];
 
         CustomPipeline {
             shader,
@@ -184,6 +187,11 @@ impl SpecializedMeshPipeline for CustomPipeline {
             ],
         });
         descriptor.fragment.as_mut().unwrap().shader = self.shader.clone();
+        // descriptor.layout = Some(vec![
+            // self.mesh_pipeline.view_layout.clone(),
+            // self.mesh_pipeline.mesh_layout.clone(),
+        // ]).unwrap();
+
         Ok(descriptor)
     }
 }
@@ -251,12 +259,12 @@ impl CellRenderer {
     }
 
     pub fn cell_count(&self) -> usize {
-        (self.bounds * self.bounds * self.bounds) as usize
+        (self.bounds.pow(3)) as usize
     }
 
     pub fn set_bounds(&mut self, new_bounds: i32) {
         if new_bounds != self.bounds {
-            let new_count = new_bounds * new_bounds * new_bounds;
+            let new_count = new_bounds.pow(3);
             self.values.resize(new_count as usize, 0);
             self.neighbors.resize(new_count as usize, 0);
             self.bounds = new_bounds;
