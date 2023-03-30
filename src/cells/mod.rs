@@ -12,16 +12,16 @@ pub trait Sim: Send + Sync {
     fn render(&self, data: &mut CellRenderer);
 
     fn reset(&mut self) {
-        let bounds = self.bounds();
+        let bounds = self.get_bounds();
         self.set_bounds(0);
         self.set_bounds(bounds);
     }
 
     fn spawn_noise(&mut self, rule: &Rule);
 
-    fn cell_count(&self) -> usize;
+    fn get_count(&self) -> usize;
 
-    fn bounds(&self) -> i32;
+    fn get_bounds(&self) -> i32;
 
     fn set_bounds(&mut self, new_bounds: i32) -> i32;
 }
