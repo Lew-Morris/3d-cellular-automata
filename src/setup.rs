@@ -10,7 +10,7 @@ use bevy::{
 use crate::cells::{Example, Sims};
 use crate::cells;
 use crate::neighbours::Neighbourhood::*;
-use crate::render::InstanceMaterialData;
+use crate::render::{InstanceMaterialData};
 use crate::rotating_camera::RotatingCamera;
 use crate::rule::{ColorMethod, Rule, Value};
 
@@ -22,11 +22,6 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         Box::new(cells::simple_cell::SingleThreaded::new()),
     );
 
-    // sims.add_sim(
-    //     "(Broken) - Atomic Cell".into(),
-    //     Box::new(cells::atomic::Atomic::new()),
-    // );
-
     sims.add_example(Example {
         name: "Builder".into(),
         rule: Rule {
@@ -36,8 +31,8 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             neighbourhood: Moore,
         },
         colour_method: ColorMethod::DistToCenter,
-        colour1: Color::YELLOW,
-        colour2: Color::RED,
+        colour1: Color::GRAY,
+        colour2: Color::CYAN,
     });
 
     sims.add_example(Example {
@@ -50,8 +45,8 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         },
 
         colour_method: ColorMethod::DistToCenter,
-        colour1: Color::GREEN,
-        colour2: Color::BLUE,
+        colour1: Color::WHITE,
+        colour2: Color::SEA_GREEN,
     });
 
     sims.set_example(0);
@@ -67,7 +62,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         //         .flat_map(|x| (1..=100).map(move |y| (x as f32 / 10.0, y as f32 / 10.0)))
         //         .map(|(x, y)| InstanceData {
         //             position: Vec3::new(x * 10.0 - 5.0, y * 10.0 - 5.0, 0.0),
-        //             scale: 1.0,
+        //             scale: 0.5,
         //             color: Color::hsla(x * 360., y, 0.5, 1.0).as_rgba_f32(),
         //         })
         //         .collect(),
@@ -80,10 +75,15 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
     // Spawn Camera
     commands.spawn(Camera3dBundle {
         // transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-        transform: Transform::from_xyz(-70., 0., 195.).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(0.0, 0.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     })
         // .insert(FlyCamera::default()); // Todo! Add movable camera
         // .insert(Camera::default());
         .insert(RotatingCamera::default());
+
+    commands.spawn(PointLightBundle {
+        transform: Transform::from_translation(Vec3::ONE * 3.0),
+        ..default()
+    });
 }
