@@ -15,6 +15,7 @@ use crate::state_changed::StateChangedEvent;
 
 // use bevy_fly_camera::FlyCameraPlugin;
 
+mod tests;
 pub mod state_changed;
 mod render;
 mod utilities;

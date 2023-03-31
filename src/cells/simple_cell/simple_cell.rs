@@ -72,10 +72,12 @@ impl SingleThreaded {
         result
     }
 
+    // Convert index in vector to a position (x, y, z) in a 3D cube
     fn idx_to_pos(&self, index: usize) -> IVec3 {
         utilities::idx_to_pos(index as i32, self.bounds)
     }
 
+    // Convert position (x, y, z) in a 3D cube to an index in a 2D vector
     fn pos_to_idx(&self, position: IVec3) -> usize {
         utilities::pos_to_idx(position, self.bounds)
     }
@@ -119,10 +121,11 @@ impl SingleThreaded {
             }
         }
 
-        // update neighbors.
+        // Update neighbouring cells
         for index in spawns {
             self.update_neighbours(rule, index, true);
         }
+        // Update dead cells
         for index in deaths {
             self.update_neighbours(rule, index, false);
         }
