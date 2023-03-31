@@ -1,18 +1,17 @@
+use crate::render::InstanceData;
+use crate::{
+    render::{CellRenderer, InstanceMaterialData},
+    cells::Sim,
+    utilities,
+    neighbours::Neighbourhood,
+    rule::{ColorMethod, Rule},
+};
+use bevy::prelude::Resource;
 use bevy::{
     prelude::{Color, Plugin, Query, ResMut},
     tasks::AsyncComputeTaskPool,
 };
-use bevy::prelude::Resource;
 use bevy_egui::{egui, EguiContexts};
-
-use crate::{
-    cells::Sim,
-    helper,
-    neighbours::Neighbourhood,
-    render::{CellRenderer, InstanceMaterialData},
-    rule::{ColorMethod, Rule},
-};
-use crate::render::InstanceData;
 
 #[derive(Clone)]
 pub struct Example {
@@ -28,14 +27,14 @@ pub struct Sims {
     sims: Vec<(String, Box<dyn Sim>)>,
     active_sim: usize,
     bounds: i32,
-    update_dt: std::time::Duration,
+    update_duration: std::time::Duration,
 
     renderer: Option<Box<CellRenderer>>, // rust...
 
     rule: Option<Rule>, // this is really quite dumb. maybe Cell would have been a good idea.
-    color_method: ColorMethod,
-    color1: Color,
-    color2: Color,
+    colour_method: ColorMethod,
+    colour1: Color,
+    colour2: Color,
 
     examples: Vec<Example>,
 }
@@ -45,13 +44,13 @@ impl Sims {
         Sims {
             sims: vec![],
             active_sim: usize::MAX,
-            bounds: 64,
-            update_dt: std::time::Duration::from_secs(0),
+            bounds: 100,
+            update_duration: std::time::Duration::from_secs(0),
             renderer: Some(Box::new(CellRenderer::new())),
             rule: None,
-            color_method: ColorMethod::DistToCenter,
-            color1: Color::YELLOW,
-            color2: Color::RED,
+            colour_method: ColorMethod::DistToCenter,
+            colour1: Color::RED,
+            colour2: Color::RED,
             examples: vec![],
         }
     }
@@ -70,6 +69,7 @@ impl Sims {
         }
 
         let rule = self.rule.take().unwrap();
+
         self.active_sim = index;
         self.bounds = self.sims[index].1.set_bounds(self.bounds);
         self.sims[index].1.spawn_noise(&rule);
@@ -80,9 +80,9 @@ impl Sims {
     pub fn set_example(&mut self, index: usize) {
         let example = self.examples[index].clone();
         let rule = example.rule;
-        self.color_method = example.colour_method;
-        self.color1 = example.colour1;
-        self.color2 = example.colour2;
+        self.colour_method = example.colour_method;
+        self.colour1 = example.colour1;
+        self.colour2 = example.colour2;
 
         if self.active_sim < self.sims.len() {
             let sim = &mut self.sims[self.active_sim].1;
@@ -107,7 +107,7 @@ pub fn update(
 
     egui::Window::new("Settings").show(contexts.ctx_mut(), |ui| {
         let old_bounds = bounds;
-        let old_active = active_sim;
+        let previous_sim = active_sim;
 
         ui.label("Simulator:");
         {
@@ -119,16 +119,16 @@ pub fn update(
                     }
                 });
 
-            if active_sim != old_active {
+            if active_sim != previous_sim {
                 current.set_sim(active_sim);
                 bounds = current.bounds;
             }
 
-            let update_dt = current.update_dt;
+            let update_dt = current.update_duration;
             let rule = current.rule.take().unwrap();
             let sim = &mut current.sims[active_sim].1;
 
-            let cell_count = sim.cell_count();
+            let cell_count = sim.get_count();
             ui.label(format!("cells: {}", cell_count));
             ui.label(format!(
                 "update: {:.2?} per cell",
@@ -142,13 +142,12 @@ pub fn update(
                 sim.spawn_noise(&rule);
             }
 
-            ui.add(egui::Slider::new(&mut bounds, 32..=128).text("bounding size"));
+            ui.add(egui::Slider::new(&mut bounds, 32..=128).text("Bounding size"));
             if bounds != old_bounds {
                 bounds = sim.set_bounds(bounds);
                 sim.spawn_noise(&rule);
                 current.renderer.as_mut().unwrap().set_bounds(bounds);
             }
-
             current.rule = Some(rule);
         }
 
@@ -157,31 +156,36 @@ pub fn update(
         ui.label("Rules:");
         {
             egui::ComboBox::from_label("Colouring")
-                .selected_text(format!("{:?}", current.color_method))
+                .selected_text(format!("{:?}", current.colour_method))
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
-                        &mut current.color_method,
+                        &mut current.colour_method,
                         ColorMethod::Single,
                         "Single");
                     ui.selectable_value(
-                        &mut current.color_method,
+                        &mut current.colour_method,
                         ColorMethod::State,
                         "State",
                     );
                     ui.selectable_value(
-                        &mut current.color_method,
+                        &mut current.colour_method,
                         ColorMethod::DistToCenter,
                         "Distance to Center",
                     );
                     ui.selectable_value(
-                        &mut current.color_method,
+                        &mut current.colour_method,
                         ColorMethod::Neighbour,
                         "Neighbors",
                     );
+                    ui.selectable_value(
+                        &mut current.colour_method,
+                        ColorMethod::Index,
+                        "Index",
+                    );
                 });
 
-            color_picker(ui, &mut current.color1);
-            color_picker(ui, &mut current.color2);
+            color_picker(ui, &mut current.colour1);
+            color_picker(ui, &mut current.colour2);
 
             let mut rule = current.rule.take().unwrap();
             let old_rule = rule.clone();
@@ -239,19 +243,22 @@ pub fn update(
         let neighbors = renderer.neighbors[index];
 
         if value != 0 {
-            let pos = helper::idx_to_pos(index, bounds);
+            let pos = utilities::idx_to_pos(index as i32, bounds);
             instance_data.push(InstanceData {
-                position: (pos - helper::centre(bounds)).as_vec3(),
+                position: (pos - utilities::centre(bounds)).as_vec3(),
                 scale: 1.0,
                 color: current
-                    .color_method
+                    .colour_method
                     .color(
-                        current.color1,
-                        current.color2,
+                        current.colour1,
+                        current.colour2,
                         rule.states,
                         value,
                         neighbors,
-                        helper::dist_to_centre(pos, bounds),
+                        utilities::get_dist_to_centre(pos, bounds),
+                        index,
+                        renderer.cell_count(),
+
                     )
                     .into(),
             });
@@ -260,7 +267,7 @@ pub fn update(
 
     current.bounds = bounds;
     current.active_sim = active_sim;
-    current.update_dt = update_dt;
+    current.update_duration = update_dt;
     current.renderer = Some(renderer);
     current.rule = Some(rule);
 }

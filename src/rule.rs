@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use bevy::prelude::Color;
 
-use crate::{helper, neighbours::Neighbourhood};
+use crate::{utilities, neighbours::Neighbourhood};
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Value([bool; 27]);
@@ -26,18 +26,12 @@ impl Value {
 
     #[allow(dead_code)]
     pub fn in_range(&self, value: u8) -> bool {
-        // self.0[value as usize]
-        // *self.0.get(value as usize).unwrap_or(&false)
         if (value as usize) < self.0.len() {
             *self.0.get(value as usize).unwrap()
         } else {
             false
         }
     }
-
-    // pub fn in_range_incorrect(&self, value: u8) -> bool {
-    //     *self.0.get(value as usize).unwrap_or(&false)
-    // }
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -55,6 +49,7 @@ pub enum ColorMethod {
     State,
     DistToCenter,
     Neighbour,
+    Index,
 }
 
 impl ColorMethod {
@@ -62,21 +57,26 @@ impl ColorMethod {
         &self,
         c1: Color,
         c2: Color,
-        states: u8,
+        num_states: u8,
         state: u8,
         neighbours: u8,
         dist_to_center: f32,
-    ) -> Color {
+        index: usize,
+        total_cells: usize, ) -> Color {
         match self {
             ColorMethod::Single => c1,
             ColorMethod::State => {
-                let dt = state as f32 / states as f32;
-                helper::state_colour(c1, c2, dt)
+                let gradient = state as f32 / num_states as f32;
+                utilities::state_colour(c1, c2, gradient)
             }
-            ColorMethod::DistToCenter => helper::state_colour(c1, c2, dist_to_center),
+            ColorMethod::DistToCenter => utilities::state_colour(c1, c2, dist_to_center),
             ColorMethod::Neighbour => {
-                let dt = neighbours as f32 / 26f32;
-                helper::state_colour(c1, c2, dt)
+                let gradient = neighbours as f32 / 26f32;
+                utilities::state_colour(c1, c2, gradient)
+            }
+            ColorMethod::Index => {
+                let gradient = index as f32 / total_cells as f32;
+                utilities::state_colour(c1, c2, gradient)
             }
         }
     }
