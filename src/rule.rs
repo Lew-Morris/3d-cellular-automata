@@ -57,7 +57,7 @@ impl ColorMethod {
         &self,
         c1: Color,
         c2: Color,
-        states: u8,
+        num_states: u8,
         state: u8,
         neighbours: u8,
         dist_to_center: f32,
@@ -66,17 +66,17 @@ impl ColorMethod {
         match self {
             ColorMethod::Single => c1,
             ColorMethod::State => {
-                let dt = state as f32 / states as f32;
-                utilities::state_colour(c1, c2, dt)
+                let gradient = state as f32 / num_states as f32;
+                utilities::state_colour(c1, c2, gradient)
             }
             ColorMethod::DistToCenter => utilities::state_colour(c1, c2, dist_to_center),
             ColorMethod::Neighbour => {
-                let dt = neighbours as f32 / 26f32;
-                utilities::state_colour(c1, c2, dt)
+                let gradient = neighbours as f32 / 26f32;
+                utilities::state_colour(c1, c2, gradient)
             }
             ColorMethod::Index => {
-                let dt = index as f32 / total_cells as f32;
-                utilities::state_colour(c1, c2, dt)
+                let gradient = index as f32 / total_cells as f32;
+                utilities::state_colour(c1, c2, gradient)
             }
         }
     }
