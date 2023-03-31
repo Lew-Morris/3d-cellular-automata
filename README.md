@@ -8,7 +8,7 @@ I am hoping to port this to Web Assembly (WASM) to be hosted on [my website](htt
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/lew-morris/3d-cellular-automata)
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/lew-morris/3d-cellular-automata/main)
 ![GitHub repo size](https://img.shields.io/github/repo-size/lew-morris/3d-cellular-automata)
-
+[![Build: Main](https://github.com/Lew-Morris/3d-cellular-automata/actions/workflows/main-test.yml/badge.svg?branch=main)](https://github.com/Lew-Morris/3d-cellular-automata/actions/workflows/main-test.yml)
 ---
 
 
