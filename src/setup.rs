@@ -10,7 +10,7 @@ use bevy::{
 use crate::cells::{Example, Sims};
 use crate::cells;
 use crate::neighbours::Neighbourhood::*;
-use crate::render::{InstanceMaterialData};
+use crate::render::{InstanceData, InstanceMaterialData};
 use crate::rotating_camera::RotatingCamera;
 use crate::rule::{ColorMethod, Rule, Value};
 
@@ -46,27 +46,27 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
 
         colour_method: ColorMethod::DistToCenter,
         colour1: Color::WHITE,
-        colour2: Color::SEA_GREEN,
+        colour2: Color::GREEN,
     });
 
     sims.set_example(0);
 
     commands.spawn((
-        meshes.add(Mesh::from(shape::Cube { size: 0.5 })),
+        meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
         Transform::from_xyz(0.0, 0.0, 0.0),
         GlobalTransform::default(),
-        InstanceMaterialData(Vec::new()),
-        // InstanceMaterialData
-        //     (
-        //     (1..=10)
-        //         .flat_map(|x| (1..=100).map(move |y| (x as f32 / 10.0, y as f32 / 10.0)))
-        //         .map(|(x, y)| InstanceData {
-        //             position: Vec3::new(x * 10.0 - 5.0, y * 10.0 - 5.0, 0.0),
-        //             scale: 0.5,
-        //             color: Color::hsla(x * 360., y, 0.5, 1.0).as_rgba_f32(),
-        //         })
-        //         .collect(),
-        // ),
+        // InstanceMaterialData(Vec::new()),
+        InstanceMaterialData
+            (
+            (1..=10)
+                .flat_map(|x| (1..=100).map(move |y| (x as f32 / 10.0, y as f32 / 10.0)))
+                .map(|(x, y)| InstanceData {
+                    position: Vec3::new(x * 10.0 - 5.0, y * 10.0 - 5.0, 0.0),
+                    scale: 0.9,
+                    color: Color::hsla(x * 360., y, 0.5, 1.0).as_rgba_f32(),
+                })
+                .collect(),
+        ),
         Visibility::default(),
         ComputedVisibility::default(),
         NoFrustumCulling,
@@ -82,8 +82,8 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         // .insert(Camera::default());
         .insert(RotatingCamera::default());
 
-    commands.spawn(PointLightBundle {
-        transform: Transform::from_translation(Vec3::ONE * 3.0),
-        ..default()
-    });
+    // commands.spawn(PointLightBundle {
+    //     transform: Transform::from_translation(Vec3::ONE * 3.0),
+    //     ..default()
+    // });
 }

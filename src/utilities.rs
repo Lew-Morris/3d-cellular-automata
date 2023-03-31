@@ -34,20 +34,11 @@ pub fn idx_to_pos(index: i32, bounds: i32) -> IVec3 {
 
     // (Modified) Source: https://stackoverflow.com/a/11712864
     let rem = index % (bounds * bounds);
-    ivec3(
-        rem % bounds,
-        rem / bounds,
-        index / (bounds * bounds),
-    )
+    ivec3(rem % bounds, rem / bounds, index / (bounds * bounds))
 }
 
 pub fn pos_to_idx(position: IVec3, bounds: i32) -> usize {
     (position.x + (position.y * bounds) + (position.z * bounds * bounds)) as usize
-    // let x = pos.x as usize;
-    // let y = pos.y as usize;
-    // let z = pos.z as usize;
-    // let bounds = bounds as usize;
-    // x + y*bounds + z*bounds*bounds
 }
 
 pub fn centre(bounds: i32) -> IVec3 {
