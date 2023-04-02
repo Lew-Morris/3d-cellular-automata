@@ -1,8 +1,9 @@
-use std::ops::RangeInclusive;
-
 use bevy::prelude::Color;
-
-use crate::{utilities, neighbours::Neighbourhood};
+use crate::{
+    neighbours::Neighbourhood,
+    utilities,
+};
+use std::ops::RangeInclusive;
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Value([bool; 27]);
@@ -44,37 +45,39 @@ pub struct Rule {
 
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum ColorMethod {
-    Single,
+pub enum ColourMethod {
+    Colour1,
+    Colour2,
     State,
     DistToCenter,
     Neighbour,
     Index,
 }
 
-impl ColorMethod {
+impl ColourMethod {
     pub fn color(
         &self,
         c1: Color,
         c2: Color,
-        num_states: u8,
-        state: u8,
+        current_state: u8,
+        total_states: u8,
         neighbours: u8,
-        dist_to_center: f32,
+        distance_to_centre: f32,
         index: usize,
         total_cells: usize, ) -> Color {
         match self {
-            ColorMethod::Single => c1,
-            ColorMethod::State => {
-                let gradient = state as f32 / num_states as f32;
+            ColourMethod::Colour1 => c1,
+            ColourMethod::Colour2 => c2,
+            ColourMethod::State => {
+                let gradient = current_state as f32 / total_states as f32;
                 utilities::state_colour(c1, c2, gradient)
             }
-            ColorMethod::DistToCenter => utilities::state_colour(c1, c2, dist_to_center),
-            ColorMethod::Neighbour => {
+            ColourMethod::DistToCenter => utilities::state_colour(c1, c2, distance_to_centre),
+            ColourMethod::Neighbour => {
                 let gradient = neighbours as f32 / 26f32;
                 utilities::state_colour(c1, c2, gradient)
             }
-            ColorMethod::Index => {
+            ColourMethod::Index => {
                 let gradient = index as f32 / total_cells as f32;
                 utilities::state_colour(c1, c2, gradient)
             }
