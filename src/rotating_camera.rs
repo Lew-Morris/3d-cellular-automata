@@ -1,6 +1,16 @@
 use bevy::{
-    math::{Quat, vec3},
-    prelude::*
+    math::{
+        Quat,
+        vec3
+    },
+    prelude::{
+        App,
+        Plugin,
+        Query,
+        Transform,
+        Vec3,
+    },
+    ecs::component::Component,
 };
 
 #[derive(Component)]
@@ -18,7 +28,7 @@ impl Default for RotatingCamera {
             rotation: 0f32,
             last_tick: 0f32,
             speed: 0.01f32,
-            dist: 150f32,
+            dist: 200f32,
             center: vec3(0.0, 0.0, 0.0),
         }
     }

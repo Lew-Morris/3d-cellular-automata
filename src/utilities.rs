@@ -21,14 +21,12 @@ pub fn noise_gen<F: FnMut(IVec3)>(centre: IVec3, radius: i32, amount: usize, mut
 }
 
 pub fn default_noise<F: FnMut(IVec3)>(centre: IVec3, f: F) {
-    noise_gen(centre, 15, 10 * 10 * 10, f)
+    noise_gen(centre, 10, 10 * 10 * 10, f)
 }
 
 pub fn idx_to_pos(index: i32, bounds: i32) -> IVec3 {
-    // The index to position conversion was wrong, see below
-    // Example:
-        // idx = 55, bounds = 32
-        // Output - (23, 0, 0) should be (23, 1, 0)
+    // The index to position conversion was broken
+
     // Old Code:
     // ivec3(index % bounds,index / bounds & bounds,index / bounds / bounds)
 

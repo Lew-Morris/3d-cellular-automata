@@ -1,25 +1,62 @@
 use bevy::{
-    prelude::*,
-    render::view::NoFrustumCulling,
-    // diagnostic::{
-    //     FrameTimeDiagnosticsPlugin,
-    //     LogDiagnosticsPlugin
-    // }
+    prelude::{
+        Assets,
+        Camera3dBundle,
+        Color,
+        Commands,
+        default,
+        GlobalTransform,
+        Mesh,
+        ResMut,
+        shape,
+        Transform,
+        Vec3,
+    },
+    render::view::{
+        ComputedVisibility,
+        NoFrustumCulling,
+        Visibility
+    },
 };
 
-use crate::cells::{Example, Sims};
-use crate::cells;
-use crate::neighbours::Neighbourhood::*;
-use crate::render::{InstanceData, InstanceMaterialData};
-use crate::rotating_camera::RotatingCamera;
-use crate::rule::{ColorMethod, Rule, Value};
+use crate::{
+    cells::{
+        Example,
+        single_threaded,
+        Sims,
+    },
+    neighbours::Neighbourhood::{
+        Moore,
+        VonNeumann,
+    },
+    render::{
+        InstanceData,
+        InstanceMaterialData,
+    },
+    rotating_camera::{
+        RotatingCamera,
+    },
+    rule::{
+        ColourMethod,
+        Rule,
+        Value,
+    },
+};
+
+// DIAGNOSTICS - Framerate information
+// use bevy::{
+//     diagnostic::{
+//         FrameTimeDiagnosticsPlugin,
+//         LogDiagnosticsPlugin
+//     },
+// };
 
 // use bevy_fly_camera::FlyCamera;
 
 pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims: ResMut<Sims>) {
     sims.add_sim(
         "Simple Cell".into(),
-        Box::new(cells::simple_cell::SingleThreaded::new()),
+        Box::new(single_threaded::SingleThreaded::new()),
     );
 
     sims.add_example(Example {
@@ -30,9 +67,9 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             states: 10,
             neighbourhood: Moore,
         },
-        colour_method: ColorMethod::DistToCenter,
-        colour1: Color::GRAY,
-        colour2: Color::CYAN,
+        colour_method: ColourMethod::DistToCenter,
+        colour1: Color::RED,
+        colour2: Color::GREEN,
     });
 
     sims.add_example(Example {
@@ -44,9 +81,9 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             neighbourhood: VonNeumann,
         },
 
-        colour_method: ColorMethod::DistToCenter,
-        colour1: Color::WHITE,
-        colour2: Color::GREEN,
+        colour_method: ColourMethod::State,
+        colour1: Color::BLACK,
+        colour2: Color::PINK,
     });
 
     sims.set_example(0);
@@ -81,9 +118,10 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         // .insert(FlyCamera::default()); // Todo! Add movable camera
         // .insert(Camera::default());
         .insert(RotatingCamera::default());
+        // .insert(FlyCamera::default());
 
     // commands.spawn(PointLightBundle {
     //     transform: Transform::from_translation(Vec3::ONE * 3.0),
     //     ..default()
-    // });
+    // }).insert(PointLight::default());
 }

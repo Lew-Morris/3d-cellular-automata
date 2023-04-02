@@ -6,6 +6,7 @@ use bevy::{
     // }
 };
 use bevy_egui::EguiPlugin;
+// use bevy_fly_camera::FlyCameraPlugin;
 
 use render::*;
 use rotating_camera::RotatingCameraPlugin;
@@ -34,11 +35,13 @@ fn main() {
     App::new()
         .add_event::<StateChangedEvent>()
         .insert_resource(task_pool_settings)
-        .insert_resource(ClearColor(Color::rgb(0.9f32, 0.9f32, 0.9f32))) // Background color
+        // todo! Add a setting to change the background colour, requires restart
+        .insert_resource(ClearColor(Color::rgb(0.0f32, 0.0f32, 0.0f32))) // Black background color
+        // .insert_resource(ClearColor(Color::rgb(0.9f32, 0.9f32, 0.9f32))) // Off-White background color
         .add_plugins(DefaultPlugins)
         .add_plugin(EguiPlugin)
         .add_plugin(RotatingCameraPlugin)
-        // .add_plugin(FlyCameraPlugin) // todo! implement flying camera
+        // .add_plugin(FlyCameraPlugin)
         .add_plugin(CustomMaterialPlugin)
         .add_plugin(cells::SimsPlugin)
         // .add_plugin(FrameTimeDiagnosticsPlugin::default()) // Debugging

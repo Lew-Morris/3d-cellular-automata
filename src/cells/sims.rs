@@ -1,23 +1,44 @@
-use crate::render::InstanceData;
-use crate::{
-    render::{CellRenderer, InstanceMaterialData},
-    cells::Sim,
-    utilities,
-    neighbours::Neighbourhood,
-    rule::{ColorMethod, Rule},
-};
-use bevy::prelude::Resource;
 use bevy::{
-    prelude::{Color, Plugin, Query, ResMut},
+    prelude::{
+        Color,
+        Plugin,
+        Query,
+        ResMut,
+        Resource,
+    },
     tasks::AsyncComputeTaskPool,
 };
-use bevy_egui::{egui, EguiContexts};
+use bevy_egui::{
+    egui::{
+        Slider,
+        ComboBox,
+        Window,
+        Ui,
+        color_picker,
+    },
+    EguiContexts
+};
+
+use crate::{
+    cells::Sim,
+    neighbours::Neighbourhood::*,
+    render::{
+        CellRenderer,
+        InstanceMaterialData
+    },
+    rule::{
+        ColourMethod,
+        Rule
+    },
+    utilities,
+};
+use crate::render::InstanceData;
 
 #[derive(Clone)]
 pub struct Example {
     pub name: String,
     pub rule: Rule,
-    pub colour_method: ColorMethod,
+    pub colour_method: ColourMethod,
     pub colour1: Color,
     pub colour2: Color,
 }
@@ -32,7 +53,7 @@ pub struct Sims {
     renderer: Option<Box<CellRenderer>>, // rust...
 
     rule: Option<Rule>, // this is really quite dumb. maybe Cell would have been a good idea.
-    colour_method: ColorMethod,
+    colour_method: ColourMethod,
     colour1: Color,
     colour2: Color,
 
@@ -48,7 +69,7 @@ impl Sims {
             update_duration: std::time::Duration::from_secs(0),
             renderer: Some(Box::new(CellRenderer::new())),
             rule: None,
-            colour_method: ColorMethod::DistToCenter,
+            colour_method: ColourMethod::DistToCenter,
             colour1: Color::RED,
             colour2: Color::RED,
             examples: vec![],
@@ -105,13 +126,13 @@ pub fn update(
     let mut bounds = current.bounds;
     let mut active_sim = current.active_sim;
 
-    egui::Window::new("Settings").show(contexts.ctx_mut(), |ui| {
+    Window::new("Settings").show(contexts.ctx_mut(), |ui| {
         let old_bounds = bounds;
         let previous_sim = active_sim;
 
         ui.label("Simulator:");
         {
-            egui::ComboBox::from_id_source("simulator")
+            ComboBox::from_id_source("simulator")
                 .selected_text(&current.sims[active_sim].0)
                 .show_ui(ui, |ui| {
                     for (i, (name, _)) in current.sims.iter().enumerate() {
@@ -142,7 +163,7 @@ pub fn update(
                 sim.spawn_noise(&rule);
             }
 
-            ui.add(egui::Slider::new(&mut bounds, 32..=128).text("Bounding size"));
+            ui.add(Slider::new(&mut bounds, 32..=128).text("Bounding size"));
             if bounds != old_bounds {
                 bounds = sim.set_bounds(bounds);
                 sim.spawn_noise(&rule);
@@ -155,62 +176,61 @@ pub fn update(
 
         ui.label("Rules:");
         {
-            egui::ComboBox::from_label("Colouring")
+            ComboBox::from_label("Colouring")
                 .selected_text(format!("{:?}", current.colour_method))
                 .show_ui(ui, |ui| {
                     ui.selectable_value(
                         &mut current.colour_method,
-                        ColorMethod::Single,
+                        ColourMethod::Colour1,
                         "Single");
                     ui.selectable_value(
                         &mut current.colour_method,
-                        ColorMethod::State,
+                        ColourMethod::State,
                         "State",
                     );
                     ui.selectable_value(
                         &mut current.colour_method,
-                        ColorMethod::DistToCenter,
+                        ColourMethod::DistToCenter,
                         "Distance to Center",
                     );
                     ui.selectable_value(
                         &mut current.colour_method,
-                        ColorMethod::Neighbour,
+                        ColourMethod::Neighbour,
                         "Neighbors",
                     );
                     ui.selectable_value(
                         &mut current.colour_method,
-                        ColorMethod::Index,
+                        ColourMethod::Index,
                         "Index",
                     );
                 });
 
-            color_picker(ui, &mut current.colour1);
-            color_picker(ui, &mut current.colour2);
+            colour_picker(ui, &mut current.colour1);
+            colour_picker(ui, &mut current.colour2);
 
             let mut rule = current.rule.take().unwrap();
-            let old_rule = rule.clone();
+            let previous_rule = rule.clone();
 
-            egui::ComboBox::from_label("Neighbor method")
+            ComboBox::from_label("Neighbour Method")
                 .selected_text(format!("{:?}", rule.neighbourhood))
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(&mut rule.neighbourhood, Neighbourhood::Moore, "Moore");
+                    ui.selectable_value(&mut rule.neighbourhood, Moore, "Moore");
                     ui.selectable_value(
                         &mut rule.neighbourhood,
-                        Neighbourhood::VonNeumann,
+                        VonNeumann,
                         "Von Neumann",
                     );
                 });
 
-            ui.add(egui::Slider::new(&mut rule.states, 1..=50).text("states"));
+            ui.add(Slider::new(&mut rule.states, 1..=50).text("Number of States"));
 
-            // TODO: survival & birth rule.
+            // todo! survival & birth rule sliders
 
-            if rule != old_rule {
+            if rule != previous_rule {
                 let sim = &mut current.sims[active_sim].1;
                 sim.reset();
                 sim.spawn_noise(&rule);
             }
-
             current.rule = Some(rule);
         }
 
@@ -252,13 +272,12 @@ pub fn update(
                     .color(
                         current.colour1,
                         current.colour2,
-                        rule.states,
                         value,
+                        rule.states,
                         neighbors,
                         utilities::get_dist_to_centre(pos, bounds),
                         index,
                         renderer.cell_count(),
-
                     )
                     .into(),
             });
@@ -281,13 +300,13 @@ impl Plugin for SimsPlugin {
     }
 }
 
-fn color_picker(ui: &mut egui::Ui, color: &mut Color) {
+fn colour_picker(ui: &mut Ui, color: &mut Color) {
     let mut c = [
         (color.r() * 255.0) as u8,
         (color.g() * 255.0) as u8,
         (color.b() * 255.0) as u8,
     ];
-    egui::color_picker::color_edit_button_srgb(ui, &mut c);
+    color_picker::color_edit_button_srgb(ui, &mut c);
     color.set_r(c[0] as f32 / 255.0);
     color.set_g(c[1] as f32 / 255.0);
     color.set_b(c[2] as f32 / 255.0);

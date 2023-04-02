@@ -29,5 +29,4 @@ pub trait Sim: Send + Sync {
 pub mod sims;
 pub use sims::*;
 
-pub mod simple_cell;
-// pub mod atomic;
+pub mod single_threaded;

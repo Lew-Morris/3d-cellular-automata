@@ -32,6 +32,8 @@ impl SimpleCell {
 pub struct SingleThreaded {
     cells: Vec<SimpleCell>,
     bounds: i32,
+    // group: u8, // todo! Different cell types that compete
+
 }
 
 impl SingleThreaded {
