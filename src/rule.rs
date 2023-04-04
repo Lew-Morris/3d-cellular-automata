@@ -33,6 +33,14 @@ impl Value {
             false
         }
     }
+    pub fn set_value(mut self, value: usize) {
+        self.0[value] = true;
+    }
+
+    pub fn get_value(self, index: usize) -> bool {
+        self.0[index]
+    }
+
 }
 
 #[derive(Clone, Copy, PartialEq)]
