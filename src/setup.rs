@@ -67,7 +67,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             states: 10,
             neighbourhood: Moore,
         },
-        colour_method: ColourMethod::DistToCenter,
+        colour_method: ColourMethod::State,
         colour1: Color::RED,
         colour2: Color::GREEN,
     });
@@ -81,7 +81,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             neighbourhood: VonNeumann,
         },
 
-        colour_method: ColourMethod::State,
+        colour_method: ColourMethod::Neighbour,
         colour1: Color::BLACK,
         colour2: Color::PINK,
     });
