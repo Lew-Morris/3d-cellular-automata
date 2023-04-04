@@ -4,6 +4,7 @@ use bevy::math::{IVec3};
 pub enum Neighbourhood {
     VonNeumann,
     Moore,
+    // todo! Add custom neighbourhoods, and a tool to make them
 }
 
 impl Neighbourhood {
