@@ -8,7 +8,7 @@ use bevy::{
 };
 use rand::Rng;
 
-pub fn noise_gen<F: FnMut(IVec3)>(centre: IVec3, radius: i32, amount: usize, mut f: F) {
+pub fn generate_noise<F: FnMut(IVec3)>(centre: IVec3, radius: i32, amount: usize, mut f: F) {
     let mut rand = rand::thread_rng();
     (0..amount).for_each(|_| {
         f(centre
@@ -21,7 +21,7 @@ pub fn noise_gen<F: FnMut(IVec3)>(centre: IVec3, radius: i32, amount: usize, mut
 }
 
 pub fn default_noise<F: FnMut(IVec3)>(centre: IVec3, f: F) {
-    noise_gen(centre, 10, 10 * 10 * 10, f)
+    generate_noise(centre, 10, 8 * 8 * 8, f)
 }
 
 pub fn idx_to_pos(index: i32, bounds: i32) -> IVec3 {
@@ -39,7 +39,7 @@ pub fn pos_to_idx(position: IVec3, bounds: i32) -> usize {
     (position.x + (position.y * bounds) + (position.z * bounds * bounds)) as usize
 }
 
-pub fn centre(bounds: i32) -> IVec3 {
+pub fn get_centre(bounds: i32) -> IVec3 {
     let centre: i32 = bounds / 2;
     ivec3(centre, centre, centre)
 }
@@ -49,7 +49,7 @@ pub fn wrap(position: IVec3, bounds: i32) -> IVec3 {
 }
 
 pub fn get_dist_to_centre(position: IVec3, bounds: i32) -> f32 {
-    let pos = position - centre(bounds);
+    let pos = position - get_centre(bounds);
     let max = bounds as f32 / 2.0;
     pos.as_vec3().length() / max
 }
