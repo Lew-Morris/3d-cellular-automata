@@ -103,7 +103,6 @@ impl SingleThreaded {
     }
 
     pub fn update(&mut self, rule: &Rule) {
-        // todo! If paused, return - Currently requires a const value
         let mut spawns = vec![];
         let mut deaths = vec![];
 
@@ -152,7 +151,7 @@ impl SingleThreaded {
     // }
 
     pub fn spawn_noise(&mut self, rule: &Rule) {
-        utilities::default_noise(utilities::centre(self.bounds), |pos| {
+        utilities::default_noise(utilities::get_centre(self.bounds), |pos| {
             let index = self.pos_to_idx(self.wrap(pos));
             if self.cells[index].is_dead() {
                 self.cells[index].value = rule.states;
@@ -188,4 +187,5 @@ impl crate::cells::Sim for SingleThreaded {
     fn set_bounds(&mut self, new_bounds: i32) -> i32 {
         self.set_bounds(new_bounds)
     }
+
 }
