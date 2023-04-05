@@ -5,7 +5,7 @@ use crate::{
 };
 use std::ops::RangeInclusive;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Value([bool; 27]);
 
 impl Value {
@@ -33,14 +33,15 @@ impl Value {
             false
         }
     }
-    pub fn set_value(mut self, value: usize) {
-        self.0[value] = true;
+
+    pub fn change_value(mut self, index: usize) -> Self {
+        self.0[index] = !self.0[index];
+        return self
     }
 
     pub fn get_value(self, index: usize) -> bool {
         self.0[index]
     }
-
 }
 
 #[derive(Clone, Copy, PartialEq)]
