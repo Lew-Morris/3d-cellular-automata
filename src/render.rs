@@ -144,14 +144,10 @@ pub struct CustomPipeline {
 
 impl FromWorld for CustomPipeline {
     fn from_world(world: &mut World) -> Self {
-        // let world = world.cell();
         let asset_server = world.resource::<AssetServer>();
         let shader = asset_server.load("shaders/cell.wgsl");
 
         let mesh_pipeline = world.resource::<MeshPipeline>();
-        // let mesh_layout = &world.resource::<MeshPipeline>().mesh_layout.clone();
-        // let view_layout = &world.resource::<MeshPipeline>().view_layout.clone();
-        // let layout: Vec<BindGroupLayout> = vec![view_layout.clone(), mesh_layout.clone()];
 
         CustomPipeline {
             shader,
@@ -187,10 +183,6 @@ impl SpecializedMeshPipeline for CustomPipeline {
             ],
         });
         descriptor.fragment.as_mut().unwrap().shader = self.shader.clone();
-        // descriptor.layout = Some(vec![
-            // self.mesh_pipeline.view_layout.clone(),
-            // self.mesh_pipeline.mesh_layout.clone(),
-        // ]).unwrap();
 
         Ok(descriptor)
     }
