@@ -11,8 +11,3 @@
   - https://programming-idioms.org/idiom/27/create-a-3-dimensional-array/452/rust
 - Cell_render.rs
   - [link](https://bevyengine.org/examples/shader/shader-instancing/)
-
-## Issues
-- Cells not appearing
-  - ![img.png](assets/images/first-appearance.png)
-  - 
