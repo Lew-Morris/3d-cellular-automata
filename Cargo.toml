@@ -1,7 +1,9 @@
 [package]
 name = "cellular_automata"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
+authors = ["Lewis Morris"]
+repository = "https://github.com/Lew-Morris/3d-cellular-automata"
 
 [dependencies]
 bevy = "0.10.0"
@@ -11,7 +13,6 @@ rand = "*"
 futures-lite = "1.12.0"
 bevy_fly_camera = "0.10.0"
 
-#bevy_mod_debugdump = "0.7.0"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
@@ -21,23 +22,13 @@ opt-level = 1
 [profile.dev.package."*"]
 opt-level = 3
 
-# Enable high optimizations for everything in the release profile
+# Enable high optimizations in the release profile
 [profile.release]
 opt-level = 3
 
 # Source: Bevy Examples
 [profile.wasm-dev]
-# Use release profile as default values
 inherits = "dev"
-
-# Optimize with size in mind, also try "s", sometimes it is better.
-# This doesn't increase compilation times compared to -O3, great improvements
 opt-level = "z"
-
-# Do a second optimization pass removing duplicate or unused code from dependencies.
-# Slows compile times, marginal improvements
 lto = "fat"
-
-# When building crates, optimize larger chunks at a time
-# Slows compile times, marginal improvements
 codegen-units = 1
