@@ -10,6 +10,7 @@ use bevy::{
         AsyncComputeTaskPool,
     },
 };
+use bevy::prelude::IntoSystemConfig;
 
 use bevy_egui::{
     egui,
@@ -78,7 +79,6 @@ impl Sims {
             colour1: Color::NONE,
             colour2: Color::NONE,
             examples: vec![],
-            // paused: true,
         }
     }
 
@@ -120,9 +120,72 @@ impl Sims {
     }
 }
 
+pub struct SimsPlugin;
+impl Plugin for SimsPlugin {
+    fn build(&self, app: &mut bevy::prelude::App) {
+        app
+            .insert_resource(Sims::new())
+            .add_system(settings.before(update))
+            .add_system(update);
+    }
+}
+
 pub fn update(
     mut current: ResMut<Sims>,
     mut query: Query<&mut InstanceMaterialData>,
+    // mut contexts: EguiContexts,
+) {
+    if current.active_sim > current.sims.len() {
+        current.set_sim(0);
+    }
+    let bounds = current.bounds;
+    let active_sim = current.active_sim;
+    let rule = current.rule.take().unwrap();
+    let mut renderer = current.renderer.take().unwrap();
+
+    let sim = &mut current.sims[active_sim].1;
+
+    let t0 = std::time::Instant::now();
+    sim.update(&rule, AsyncComputeTaskPool::get());
+    let update_dt = t0.elapsed();
+    sim.render(&mut renderer);
+
+    let instance_data = &mut query.iter_mut().next().unwrap().0;
+    instance_data.truncate(0);
+    for index in 0..renderer.cell_count() {
+        let value = renderer.values[index];
+        let neighbors = renderer.neighbors[index];
+
+        if value != 0 {
+            let pos = utilities::idx_to_pos(index as i32, bounds);
+            instance_data.push(InstanceData {
+                position: (pos - utilities::get_centre(bounds)).as_vec3(),
+                scale: 1.0,
+                color: current
+                    .colour_method
+                    .set_colour(
+                        current.colour1,
+                        current.colour2,
+                        value,
+                        rule.states,
+                        neighbors,
+                        utilities::get_dist_to_centre(pos, bounds),
+                        index,
+                        renderer.cell_count(),
+                    )
+                    .into(),
+            });
+        }
+    }
+    current.bounds = bounds;
+    current.active_sim = active_sim;
+    current.update_duration = update_dt;
+    current.renderer = Some(renderer);
+    current.rule = Some(rule);
+}
+
+pub fn settings(
+    mut current: ResMut<Sims>,
     mut contexts: EguiContexts,
 ) {
     if current.active_sim > current.sims.len() {
@@ -133,13 +196,12 @@ pub fn update(
 
     // Settings GUI
     Window::new("Settings").show(contexts.ctx_mut(), |ui| {
-        let old_bounds = bounds;
+        let previous_bounds = bounds;
         let previous_sim = active_sim;
-
-        // todo! clean up the code, formatting etc
 
         // todo! Add tooltips to each element in the UI
         // ui.hyperlink("https://docs.rs/egui/").on_hover_text("This is a tooltip!");
+
         ui.label("Simulator:");
         {
             ComboBox::from_id_source("simulator")
@@ -167,20 +229,26 @@ pub fn update(
             ));
             // todo! add a label to show FPS/ frame times
 
+            // Reset the sim
             if ui.button("Reset").clicked() {
                 sim.reset();
             }
+
+            // Spawn noise
             if ui.button("Spawn noise").clicked() {
                 sim.spawn_noise(&rule);
             }
 
+            // Bounding size slider
             ui.add(Slider::new(&mut bounds, 32..=128).text("Bounding size"));
-            if bounds != old_bounds {
-                bounds = sim.set_bounds(bounds);
-                sim.spawn_noise(&rule);
-                current.renderer.as_mut().unwrap().set_bounds(bounds);
+            {
+                if bounds != previous_bounds {
+                    bounds = sim.set_bounds(bounds);
+                    sim.spawn_noise(&rule);
+                    current.renderer.as_mut().unwrap().set_bounds(bounds);
+                }
+                current.rule = Some(rule);
             }
-            current.rule = Some(rule);
         }
 
         ui.add_space(20.0);
@@ -221,12 +289,16 @@ pub fn update(
                 });
 
             ui.label("Colours");
-            colour_picker(ui, &mut current.colour1);
-            colour_picker(ui, &mut current.colour2);
+            {
+                // todo! change this
+                colour_picker(ui, &mut current.colour1);
+                colour_picker(ui, &mut current.colour2);
+            }
 
             let mut rule = current.rule.take().unwrap();
             let previous_rule = rule.clone();
 
+            // Set neighbour method
             ComboBox::from_label("Neighbour Method")
                 .selected_text(format!("{:?}", rule.neighbourhood))
                 .show_ui(ui, |ui| {
@@ -242,8 +314,10 @@ pub fn update(
                     );
                 });
 
+            // Number of states slider
             ui.add(Slider::new(&mut rule.states, 1..=50).text("Number of States"));
 
+            // If the slider changes, update the rule, and restart the simulation
             if rule != previous_rule {
                 let sim = &mut current.sims[active_sim].1;
                 sim.reset();
@@ -251,142 +325,103 @@ pub fn update(
             }
             current.rule = Some(rule);
 
+            let spacing = egui::vec2(1.0, 1.0);
             ui.add_space(10.0);
 
-            let spacing = egui::vec2(1.0, 1.0);
+
+            // Birth and Survival rules
             ui.horizontal(|ui| {
                 ui.group(|ui| {
                     ui.vertical(|ui| {
                         ui.label("Select Birth Values");
-                        Grid::new("birth_grid")
-                            .spacing(spacing)
-                            .show(ui, |ui| {
-                                // todo! grey out values depending on neighbourhood method
-                                for i in 0..=26 {
-                                    if ui.add(
-                                        Checkbox::new(
-                                            &mut rule.birth.get_value(i),
-                                            format!("{}",  i + 1))
-                                    ).clicked() {
-                                        rule.birth = rule.birth.change_value(i);
-                                        // birth_list.push(i);
+                        {
+                            // Birth value checkboxes
+                            Grid::new("birth_grid")
+                                .spacing(spacing)
+                                .show(ui, |ui| {
+                                    // todo! grey out values depending on neighbourhood method
+                                    // Checkbox for each value
+                                    for i in 0..=26 {
+                                        if ui.add(
+                                            Checkbox::new(
+                                                &mut rule.birth.get_value(i),
+                                                format!("{}",  i + 1))
+                                        ).clicked() {
+                                            rule.birth = rule.birth.change_value(i);
+                                            // birth_list.push(i);
+                                        }
+                                        // Every third element, make a new row
+                                        if (i + 1) % 3 == 0 {
+                                            ui.end_row()
+                                        }
                                     }
-                                    if (i + 1) % 3 == 0 {
-                                        ui.end_row()
+                                    // If the values change, save the rule, and restart the simulation
+                                    if rule != previous_rule {
+                                        let sim = &mut current.sims[active_sim].1;
+                                        sim.reset();
+                                        sim.spawn_noise(&rule);
                                     }
-                                }
-                                // Save the value to the current rule if changed
-                                if rule != previous_rule {
-                                    let sim = &mut current.sims[active_sim].1;
-                                    sim.reset();
-                                    sim.spawn_noise(&rule);
-                                }
-                                current.rule = Some(rule);
-                            });
+                                    current.rule = Some(rule);
+                                });
+                        }
                     });
 
                     ui.vertical(|ui| {
                         ui.label("Select Survival Values");
-                        Grid::new("survival_grid")
-                            .spacing(spacing)
-                            .show(ui, |ui| {
-                                for i in 0..=26 {
-                                    if ui.add(
-                                        Checkbox::new(
-                                            &mut rule.survival_rule.get_value(i),
-                                            format!("{}",  i + 1))
-                                    ).clicked() {
-                                        rule.survival_rule = rule.survival_rule.change_value(i);
-                                        // birth_list.push(i);
+                        {
+                            Grid::new("survival_grid")
+                                .spacing(spacing)
+                                .show(ui, |ui| {
+                                    for i in 0..=26 {
+                                        // todo! Grey out boxes > 6? (check val) if VN nbhd
+                                        // Checkbox for each value
+                                        if ui.add(
+                                            Checkbox::new(
+                                                &mut rule.survival.get_value(i),
+                                                format!("{}", i + 1))
+                                        ).clicked() {
+                                            // Update the value
+                                            rule.survival = rule.survival.change_value(i);
+                                        };
+
+                                        // Every third element, make a new row
+                                        if (i + 1) % 3 == 0 {
+                                            ui.end_row()
+                                        };
                                     };
-                                    if (i + 1) % 3 == 0 {
-                                        ui.end_row()
-                                    };
-                                };
-                                // Save the value to the current rule
-                                // current.rule.unwrap().birth = current_birth;
-                                if rule != previous_rule {
-                                    let sim = &mut current.sims[active_sim].1;
-                                    sim.reset();
-                                    sim.spawn_noise(&rule);
-                                }
-                                current.rule = Some(rule);
-                            });
+                                    // If the values change, save the rule, and restart the simulation
+                                    if rule != previous_rule {
+                                        let sim = &mut current.sims[active_sim].1;
+                                        sim.reset();
+                                        sim.spawn_noise(&rule);
+                                    }
+                                    // Update the current rule
+                                    current.rule = Some(rule);
+                                });
+                        }
                     });
                 });
             });
-
-            if rule != previous_rule {
-                let sim = &mut current.sims[active_sim].1;
-                sim.reset();
-                sim.spawn_noise(&rule);
-            }
-            // current.rule = Some(rule);
         }
 
         ui.add_space(24.0);
 
         ui.label("Examples:");
-        for i in 0..current.examples.len() {
-            let example = &current.examples[i];
-            if ui.button(&example.name).clicked() {
-                current.set_example(i);
-            }
-        };
-    });
-
-    let rule = current.rule.take().unwrap();
-    let mut renderer = current.renderer.take().unwrap();
-
-    let sim = &mut current.sims[active_sim].1;
-
-    let t0 = std::time::Instant::now();
-    sim.update(&rule, AsyncComputeTaskPool::get());
-    let update_dt = t0.elapsed();
-    sim.render(&mut renderer);
-
-    let instance_data = &mut query.iter_mut().next().unwrap().0;
-    instance_data.truncate(0);
-    for index in 0..renderer.cell_count() {
-        let value = renderer.values[index];
-        let neighbors = renderer.neighbors[index];
-
-        if value != 0 {
-            let pos = utilities::idx_to_pos(index as i32, bounds);
-            instance_data.push(InstanceData {
-                position: (pos - utilities::get_centre(bounds)).as_vec3(),
-                scale: 1.0,
-                color: current
-                    .colour_method
-                    .color(
-                        current.colour1,
-                        current.colour2,
-                        value,
-                        rule.states,
-                        neighbors,
-                        utilities::get_dist_to_centre(pos, bounds),
-                        index,
-                        renderer.cell_count(),
-                    )
-                    .into(),
-            });
+        {
+            for i in 0..current.examples.len() {
+                let example = &current.examples[i];
+                if ui.button(&example.name).clicked() {
+                    current.set_example(i);
+                }
+            };
         }
-    }
-    current.bounds = bounds;
-    current.active_sim = active_sim;
-    current.update_duration = update_dt;
-    current.renderer = Some(renderer);
-    current.rule = Some(rule);
-}
+        let rule = current.rule.take().unwrap();
 
-
-pub struct SimsPlugin;
-impl Plugin for SimsPlugin {
-    fn build(&self, app: &mut bevy::prelude::App) {
-        app
-            .insert_resource(Sims::new())
-            .add_system(update);
-    }
+        // Update all variables
+        current.bounds = bounds;
+        current.active_sim = active_sim;
+        current.rule = Some(rule);
+    });
 }
 
 fn colour_picker(ui: &mut Ui, colour: &mut Color) {
