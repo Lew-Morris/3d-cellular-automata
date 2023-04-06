@@ -42,8 +42,9 @@ use crate::{
         Value,
     },
 };
-
-// DIAGNOSTICS - Framerate information
+// |-------------|
+// | DIAGNOSTICS | - Framerate information
+// |-------------|
 // use bevy::{
 //     diagnostic::{
 //         FrameTimeDiagnosticsPlugin,
@@ -62,7 +63,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
     sims.add_example(Example {
         name: "Builder".into(),
         rule: Rule {
-            survival_rule: Value::new(&[2, 6, 9]),
+            survival: Value::new(&[2, 6, 9]),
             birth: Value::new(&[4, 6, 8, 9, 10]),
             states: 10,
             neighbourhood: Moore,
@@ -75,7 +76,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
     sims.add_example(Example {
         name: "Pyramid".into(),
         rule: Rule {
-            survival_rule: Value::from_range(0..=6),
+            survival: Value::from_range(0..=6),
             birth: Value::new(&[1, 3]),
             states: 2,
             neighbourhood: VonNeumann,
@@ -92,7 +93,6 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
         Transform::from_xyz(0.0, 0.0, 0.0),
         GlobalTransform::default(),
-        // InstanceMaterialData(Vec::new()),
         InstanceMaterialData
             (
             (1..=10)
@@ -112,7 +112,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
     // Spawn Camera
     commands.spawn(Camera3dBundle {
         // transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-        transform: Transform::from_xyz(0.0, 0.0, 0.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     })
         // .insert(FlyCamera::default()); // Todo! Add movable camera
