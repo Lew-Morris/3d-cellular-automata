@@ -1,9 +1,19 @@
 use bevy::prelude::Color;
 use crate::{
     neighbours::Neighbourhood,
-    utilities,
+    utilities::{
+        state_colour,
+    },
 };
 use std::ops::RangeInclusive;
+use ColourMethod::{
+    Colour1,
+    Colour2,
+    State,
+    DistToCenter,
+    Neighbour,
+    Index,
+};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Value([bool; 27]);
@@ -46,10 +56,10 @@ impl Value {
 
 #[derive(Clone, Copy, PartialEq)]
 pub struct Rule {
-    pub states: u8,
-    pub neighbourhood: Neighbourhood,
     pub birth: Value,
-    pub survival_rule: Value,
+    pub survival: Value,
+    pub neighbourhood: Neighbourhood,
+    pub states: u8,
 }
 
 #[allow(dead_code)]
@@ -64,7 +74,8 @@ pub enum ColourMethod {
 }
 
 impl ColourMethod {
-    pub fn color(
+    // Set the colour method
+    pub fn set_colour(
         &self,
         c1: Color,
         c2: Color,
@@ -73,22 +84,23 @@ impl ColourMethod {
         neighbours: u8,
         distance_to_centre: f32,
         index: usize,
-        total_cells: usize, ) -> Color {
+        total_cells: usize,
+    ) -> Color {
         match self {
-            ColourMethod::Colour1 => c1,
-            ColourMethod::Colour2 => c2,
-            ColourMethod::State => {
+            Colour1 => c1,
+            Colour2 => c2,
+            State => {
                 let gradient = current_state as f32 / total_states as f32;
-                utilities::state_colour(c1, c2, gradient)
+                state_colour(c1, c2, gradient)
             }
-            ColourMethod::DistToCenter => utilities::state_colour(c1, c2, distance_to_centre),
-            ColourMethod::Neighbour => {
+            DistToCenter => state_colour(c1, c2, distance_to_centre),
+            Neighbour => {
                 let gradient = neighbours as f32 / 26f32;
-                utilities::state_colour(c1, c2, gradient)
+                state_colour(c1, c2, gradient)
             }
-            ColourMethod::Index => {
+            Index => {
                 let gradient = index as f32 / total_cells as f32;
-                utilities::state_colour(c1, c2, gradient)
+                state_colour(c1, c2, gradient)
             }
         }
     }
