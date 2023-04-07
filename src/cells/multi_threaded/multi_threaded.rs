@@ -31,7 +31,6 @@ const CHUNK_SIZE: usize = 16;
 #[allow(unused)] // todo! remove
 const CELLS_PER_CHUNK: usize = CHUNK_SIZE.pow(3);
 
-
 // todo! Move or remove
 // fn bounds_to_chunk(bounds: i32) -> usize {
 //     (bounds as usize + CHUNK_SIZE - 1) / CHUNK_SIZE
