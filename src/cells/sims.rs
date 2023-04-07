@@ -184,6 +184,9 @@ pub fn update(
     current.rule = Some(rule);
 }
 
+// todo! For each example, add an image to the button, and arrange in a grid
+// todo! Allow the user to save the current simulation as an example
+//  - Would be better to convert current examples to this and add them dynamically
 pub fn settings(
     mut current: ResMut<Sims>,
     mut contexts: EguiContexts,
@@ -221,7 +224,7 @@ pub fn settings(
             let rule = current.rule.take().unwrap();
             let sim = &mut current.sims[active_sim].1;
 
-            let cell_count = sim.get_count();
+            let cell_count = sim.count();
             ui.label(format!("Cells: {}", cell_count));
             ui.label(format!(
                 "Update: {:.2?} per cell",
