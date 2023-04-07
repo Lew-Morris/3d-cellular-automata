@@ -42,6 +42,7 @@ use crate::{
         Value,
     },
 };
+use crate::cells::multi_threaded;
 // |-------------|
 // | DIAGNOSTICS | - Framerate information
 // |-------------|
@@ -60,6 +61,12 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         Box::new(single_threaded::SingleThreaded::new()),
     );
 
+    sims.add_sim(
+        "Parallel Cell".into(),
+        Box::new(multi_threaded::MultiThreaded::new()),
+    );
+
+    // todo! Add to its own system - mutates (modifies) ResMut<Sims>, so no need to return
     sims.add_example(Example {
         name: "Builder".into(),
         rule: Rule {
