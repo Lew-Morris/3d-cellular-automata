@@ -115,12 +115,12 @@ impl SingleThreaded {
 
         for (index, cell) in self.cells.iter_mut().enumerate() {
             if cell.is_dead() {
-                if rule.birth.in_range(cell.neighbours) {
+                if rule.birth.is_valid(cell.neighbours) {
                     cell.state = rule.states;
                     spawns.push(index);
                 }
             } else {
-                if cell.state < rule.states || !rule.survival.in_range(cell.neighbours) {
+                if cell.state < rule.states || !rule.survival.is_valid(cell.neighbours) {
                     if cell.state == rule.states {
                         deaths.push(index);
                     }
@@ -183,7 +183,7 @@ impl crate::cells::Sim for SingleThreaded {
         self.spawn_noise(rule);
     }
 
-    fn get_count(&self) -> usize {
+    fn count(&self) -> usize {
         self.count_cells()
     }
 
