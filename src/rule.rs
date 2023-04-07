@@ -35,8 +35,7 @@ impl Value {
         result
     }
 
-    #[allow(dead_code)]
-    pub fn in_range(&self, value: u8) -> bool {
+    pub fn is_valid(&self, value: u8) -> bool {
         if (value as usize) < self.0.len() {
             *self.0.get(value as usize).unwrap()
         } else {
@@ -91,16 +90,34 @@ impl ColourMethod {
             Colour2 => c2,
             State => {
                 let gradient = current_state as f32 / total_states as f32;
-                state_colour(c1, c2, gradient)
+                state_colour(
+                    c1,
+                    c2,
+                    gradient
+                )
             }
-            DistToCenter => state_colour(c1, c2, distance_to_centre),
+            DistToCenter => {
+                state_colour(
+                    c1,
+                    c2,
+                    distance_to_centre
+                )
+            },
             Neighbour => {
                 let gradient = neighbours as f32 / 26f32;
-                state_colour(c1, c2, gradient)
+                state_colour(
+                    c1,
+                    c2,
+                    gradient
+                )
             }
             Index => {
                 let gradient = index as f32 / total_cells as f32;
-                state_colour(c1, c2, gradient)
+                state_colour(
+                    c1,
+                    c2,
+                    gradient
+                )
             }
         }
     }
