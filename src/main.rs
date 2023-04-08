@@ -1,9 +1,9 @@
 use bevy::{
     prelude::*,
-    // diagnostic::{
-    //     FrameTimeDiagnosticsPlugin,
-    //     LogDiagnosticsPlugin
-    // }
+    diagnostic::{
+        FrameTimeDiagnosticsPlugin,
+        LogDiagnosticsPlugin
+    },
 };
 use bevy_egui::EguiPlugin;
 // use bevy_fly_camera::FlyCameraPlugin;
@@ -48,8 +48,8 @@ fn main() {
         // .add_plugin(FlyCameraPlugin)
         .add_plugin(CustomMaterialPlugin)
         .add_plugin(cells::SimsPlugin)
-        // .add_plugin(FrameTimeDiagnosticsPlugin::default()) // Debugging
-        // .add_plugin(LogDiagnosticsPlugin::default()) // Debugging
+        .add_plugin(FrameTimeDiagnosticsPlugin::default()) // Debugging
+        .add_plugin(LogDiagnosticsPlugin::default()) // Debugging
         .add_startup_system(setup)
         .run();
 }
