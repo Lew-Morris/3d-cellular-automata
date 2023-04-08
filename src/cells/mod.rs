@@ -31,4 +31,4 @@ pub mod sims;
 pub use sims::*;
 
 pub mod single_threaded;
-pub mod multi_threaded;
+pub mod multi_dimensional;
