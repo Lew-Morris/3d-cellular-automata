@@ -23,6 +23,7 @@ use crate::{
     cells::{
         Example,
         single_threaded,
+        multi_dimensional,
         Sims,
     },
     neighbours::Neighbourhood::{
@@ -42,7 +43,7 @@ use crate::{
         Value,
     },
 };
-use crate::cells::multi_threaded;
+
 // |-------------|
 // | DIAGNOSTICS | - Framerate information
 // |-------------|
@@ -62,9 +63,14 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
     );
 
     sims.add_sim(
-        "Parallel Cell".into(),
-        Box::new(multi_threaded::MultiThreaded::new()),
+        "Multi-Dimensional Cell".into(),
+        Box::new(multi_dimensional::MultiDimensional::new()),
     );
+
+    // sims.add_sim(
+    //     "Parallel Cell".into(),
+    //     Box::new(multi_threaded::MultiThreaded::new()),
+    // );
 
     // todo! Add to its own system - mutates (modifies) ResMut<Sims>, so no need to return
     sims.add_example(Example {
@@ -94,6 +100,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         colour2: Color::PINK,
     });
 
+    // todo! rng to select a random example
     sims.set_example(0);
 
     commands.spawn((
@@ -115,6 +122,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         ComputedVisibility::default(),
         NoFrustumCulling,
     ));
+    // todo! look into transparency
 
     // Spawn Camera
     commands.spawn(Camera3dBundle {
@@ -126,9 +134,4 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         // .insert(Camera::default());
         .insert(RotatingCamera::default());
         // .insert(FlyCamera::default());
-
-    // commands.spawn(PointLightBundle {
-    //     transform: Transform::from_translation(Vec3::ONE * 3.0),
-    //     ..default()
-    // }).insert(PointLight::default());
 }
