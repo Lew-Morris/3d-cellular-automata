@@ -1,48 +1,26 @@
 use bevy::{
     prelude::{
-        Assets,
-        Camera3dBundle,
-        Color,
-        Commands,
-        default,
-        GlobalTransform,
-        Mesh,
-        ResMut,
-        shape,
-        Transform,
-        Vec3,
+        default, shape, Assets, Camera3dBundle, Color, Commands, GlobalTransform, Mesh, ResMut,
+        Transform, Vec3,
     },
-    render::view::{
-        ComputedVisibility,
-        NoFrustumCulling,
-        Visibility
-    },
+    render::view::{ComputedVisibility, NoFrustumCulling, Visibility},
 };
 
 use bevy_flycam::prelude::*;
 
 use crate::{
     cells::{
-        Example,
-        single_threaded,
         multi_dimensional,
+        single_threaded,
+        Example,
         // multi_threaded,
         Sims,
     },
-    neighbours::Neighbourhood::{
-        Moore,
-        VonNeumann,
-    },
-    render::{
-        InstanceData,
-        InstanceMaterialData,
-    },
-    rule::{
-        ColourMethod,
-        Rule,
-        Value,
-    },
+    neighbours::Neighbourhood::{Moore, VonNeumann},
+    render::{InstanceData, InstanceMaterialData},
+    rule::{ColourMethod, Rule, Value},
 };
+use crate::cells::multi_threaded;
 
 // |-------------|
 // | DIAGNOSTICS | - Framerate information
@@ -54,13 +32,7 @@ use crate::{
 //     },
 // };
 
-
-
-pub fn setup(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut sims: ResMut<Sims>,
-) {
+pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims: ResMut<Sims>) {
     sims.add_sim(
         "Simple Cell".into(),
         Box::new(single_threaded::SingleThreaded::new()),
@@ -70,6 +42,11 @@ pub fn setup(
         "Multi-Dimensional Cell".into(),
         Box::new(multi_dimensional::MultiDimensional::new()),
     );
+
+    // sims.add_sim(
+    //     "Multi-Threaded Cell".into(),
+    //     Box::new(multi_threaded::MultiThreaded::new()),
+    // );
 
     // todo! Add to its own system
     sims.add_example(Example {
@@ -158,8 +135,7 @@ pub fn setup(
         meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
         Transform::from_xyz(0.0, 0.0, 0.0),
         GlobalTransform::default(),
-        InstanceMaterialData
-            (
+        InstanceMaterialData(
             (1..=10)
                 .flat_map(|x| (1..=100).map(move |y| (x as f32 / 10.0, y as f32 / 10.0)))
                 .map(|(x, y)| InstanceData {
@@ -175,11 +151,11 @@ pub fn setup(
     ));
 
     // Spawn Camera
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(50.0, 25.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    })
+    commands
+        .spawn(Camera3dBundle {
+            transform: Transform::from_xyz(50.0, 25.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        })
         // .insert(RotatingCamera::default());
         .insert(FlyCam);
-
 }
