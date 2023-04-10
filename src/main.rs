@@ -1,10 +1,4 @@
-use bevy::{
-    prelude::*,
-    // diagnostic::{
-    //     FrameTimeDiagnosticsPlugin,
-    //     LogDiagnosticsPlugin
-    // },
-};
+use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 // use bevy_fly_camera::FlyCameraPlugin;
 use bevy_flycam::prelude::*;
@@ -14,15 +8,14 @@ use setup::*;
 // use rotating_camera::RotatingCameraPlugin;
 use crate::state_changed::StateChangedEvent;
 
-
-mod state_changed;
-mod render;
-mod utilities;
+mod cells;
 mod neighbours;
+mod render;
 mod rotating_camera;
 mod rule;
-mod cells;
 mod setup;
+mod state_changed;
+mod utilities;
 
 fn main() {
     let mut task_pool_settings = TaskPoolOptions::default();
@@ -47,7 +40,7 @@ fn main() {
         .add_plugin(NoCameraPlayerPlugin)
         .insert_resource(MovementSettings {
             sensitivity: 0.00015, // default: 0.00012
-            speed: 12.0, // default: 12.0
+            speed: 12.0,          // default: 12.0
         })
         .insert_resource(KeyBindings {
             move_ascend: KeyCode::LShift,

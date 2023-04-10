@@ -2,32 +2,18 @@ use bevy::prelude::ResMut;
 
 use bevy_egui::{
     egui,
-    egui::{
-        Checkbox,
-        ComboBox,
-        Grid,
-        Slider,
-        Window,
-    },
+    egui::{Checkbox, ComboBox, Grid, Slider, Window},
     EguiContexts,
 };
 
-use crate::{
-    neighbours::Neighbourhood::*,
-    rule::{
-        ColourMethod,
-    },
-};
+use crate::{neighbours::Neighbourhood::*, rule::ColourMethod};
 
-use crate::cells::{Sims, sims};
+use crate::cells::{sims, Sims};
 
 // todo! For each example, add an image to the button, and arrange in a grid
 // todo! Allow the user to save the current simulation as an example
 //  - Would be better to convert current examples to this and add them dynamically
-pub fn settings(
-    mut current: ResMut<Sims>,
-    mut contexts: EguiContexts,
-) {
+pub fn settings(mut current: ResMut<Sims>, mut contexts: EguiContexts) {
     if current.active_sim > current.sims.len() {
         current.set_sim(0);
     }
@@ -101,16 +87,14 @@ pub fn settings(
                     ui.selectable_value(
                         &mut current.colour_method,
                         ColourMethod::Colour1,
-                        "Colour 1");
+                        "Colour 1",
+                    );
                     ui.selectable_value(
                         &mut current.colour_method,
                         ColourMethod::Colour2,
-                        "Colour 2");
-                    ui.selectable_value(
-                        &mut current.colour_method,
-                        ColourMethod::State,
-                        "State",
+                        "Colour 2",
                     );
+                    ui.selectable_value(&mut current.colour_method, ColourMethod::State, "State");
                     ui.selectable_value(
                         &mut current.colour_method,
                         ColourMethod::DistToCenter,
@@ -121,11 +105,7 @@ pub fn settings(
                         ColourMethod::Neighbour,
                         "Neighbors",
                     );
-                    ui.selectable_value(
-                        &mut current.colour_method,
-                        ColourMethod::Index,
-                        "Index",
-                    );
+                    ui.selectable_value(&mut current.colour_method, ColourMethod::Index, "Index");
                 });
 
             ui.label("Colours");
@@ -142,16 +122,8 @@ pub fn settings(
             ComboBox::from_label("Neighbour Method")
                 .selected_text(format!("{:?}", rule.neighbourhood))
                 .show_ui(ui, |ui| {
-                    ui.selectable_value(
-                        &mut rule.neighbourhood,
-                        Moore,
-                        "Moore"
-                    );
-                    ui.selectable_value(
-                        &mut rule.neighbourhood,
-                        VonNeumann,
-                        "Von Neumann",
-                    );
+                    ui.selectable_value(&mut rule.neighbourhood, Moore, "Moore");
+                    ui.selectable_value(&mut rule.neighbourhood, VonNeumann, "Von Neumann");
                 });
 
             // Number of states slider
@@ -168,7 +140,6 @@ pub fn settings(
             let spacing = egui::vec2(1.0, 1.0);
             ui.add_space(10.0);
 
-
             // Birth and Survival rules
             ui.horizontal(|ui| {
                 ui.group(|ui| {
@@ -176,68 +147,68 @@ pub fn settings(
                         ui.label("Select Birth Values");
                         {
                             // Birth value checkboxes
-                            Grid::new("birth_grid")
-                                .spacing(spacing)
-                                .show(ui, |ui| {
-                                    // todo! grey out values depending on neighbourhood method
-                                    // Checkbox for each value
-                                    for i in 0..=26 {
-                                        if ui.add(
-                                            Checkbox::new(
-                                                &mut rule.birth.get_value(i),
-                                                format!("{}",  i + 1))
-                                        ).clicked() {
-                                            rule.birth = rule.birth.change_value(i);
-                                            // birth_list.push(i);
-                                        }
-                                        // Every third element, make a new row
-                                        if (i + 1) % 3 == 0 {
-                                            ui.end_row()
-                                        }
+                            Grid::new("birth_grid").spacing(spacing).show(ui, |ui| {
+                                // todo! grey out values depending on neighbourhood method
+                                // Checkbox for each value
+                                for i in 0..=26 {
+                                    if ui
+                                        .add(Checkbox::new(
+                                            &mut rule.birth.get_value(i),
+                                            format!("{}", i + 1),
+                                        ))
+                                        .clicked()
+                                    {
+                                        rule.birth = rule.birth.change_value(i);
+                                        // birth_list.push(i);
                                     }
-                                    // If the values change, save the rule, and restart the simulation
-                                    if rule != previous_rule {
-                                        let sim = &mut current.sims[active_sim].1;
-                                        sim.reset();
-                                        sim.spawn_noise(&rule);
+                                    // Every third element, make a new row
+                                    if (i + 1) % 3 == 0 {
+                                        ui.end_row()
                                     }
-                                    current.rule = Some(rule);
-                                });
+                                }
+                                // If the values change, save the rule, and restart the simulation
+                                if rule != previous_rule {
+                                    let sim = &mut current.sims[active_sim].1;
+                                    sim.reset();
+                                    sim.spawn_noise(&rule);
+                                }
+                                current.rule = Some(rule);
+                            });
                         }
                     });
 
                     ui.vertical(|ui| {
                         ui.label("Select Survival Values");
                         {
-                            Grid::new("survival_grid")
-                                .spacing(spacing)
-                                .show(ui, |ui| {
-                                    for i in 0..=26 {
-                                        // todo! Grey out boxes > 6? (check val) if VN nbhd
-                                        // Checkbox for each value
-                                        if ui.add(
-                                            Checkbox::new(
-                                                &mut rule.survival.get_value(i),
-                                                format!("{}", i + 1))
-                                        ).clicked() {
-                                            // Update the value
-                                            rule.survival = rule.survival.change_value(i);
-                                        };
-
-                                        // Every third element, make a new row
-                                        if (i + 1) % 3 == 0 {
-                                            ui.end_row()
-                                        };
+                            Grid::new("survival_grid").spacing(spacing).show(ui, |ui| {
+                                for i in 0..=26 {
+                                    // todo! Grey out boxes > 6? (check val) if VN nbhd
+                                    // Checkbox for each value
+                                    if ui
+                                        .add(Checkbox::new(
+                                            &mut rule.survival.get_value(i),
+                                            format!("{}", i + 1),
+                                        ))
+                                        .clicked()
+                                    {
+                                        // Update the value
+                                        rule.survival = rule.survival.change_value(i);
                                     };
-                                    // If the values change, save the rule, and restart the simulation
-                                    if rule != previous_rule {
-                                        let sim = &mut current.sims[active_sim].1;
-                                        sim.reset();
-                                        sim.spawn_noise(&rule);
-                                    }
-                                    // Update the current rule
-                                    current.rule = Some(rule);
-                                });
+
+                                    // Every third element, make a new row
+                                    if (i + 1) % 3 == 0 {
+                                        ui.end_row()
+                                    };
+                                }
+                                // If the values change, save the rule, and restart the simulation
+                                if rule != previous_rule {
+                                    let sim = &mut current.sims[active_sim].1;
+                                    sim.reset();
+                                    sim.spawn_noise(&rule);
+                                }
+                                // Update the current rule
+                                current.rule = Some(rule);
+                            });
                         }
                     });
                 });
@@ -253,7 +224,7 @@ pub fn settings(
                 if ui.button(&example.name).clicked() {
                     current.set_example(i);
                 }
-            };
+            }
         }
         let rule = current.rule.take().unwrap();
 

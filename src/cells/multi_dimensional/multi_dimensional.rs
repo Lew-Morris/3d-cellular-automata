@@ -1,19 +1,10 @@
 // use std::thread::spawn;
-use bevy::{
-    math::{
-        IVec3,
-    },
-    tasks::TaskPool,
-};
 use crate::{
     render::CellRenderer,
     rule::Rule,
-    utilities::{
-        wrap,
-        default_noise,
-        get_centre,
-    }
+    utilities::{default_noise, get_centre, wrap},
 };
+use bevy::{math::IVec3, tasks::TaskPool};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Position {
@@ -32,8 +23,6 @@ pub struct SimpleCell {
 pub struct MultiDimensional {
     pub cells: Vec<Vec<Vec<SimpleCell>>>,
     pub bounds: i32,
-    pub chunk_radius: usize,
-    pub chunk_count: usize,
 }
 
 impl SimpleCell {
@@ -44,7 +33,9 @@ impl SimpleCell {
         }
     }
 
-    pub fn is_dead(&self) -> bool { self.state == 0}
+    pub fn is_dead(&self) -> bool {
+        self.state == 0
+    }
 }
 
 impl Position {
@@ -70,8 +61,6 @@ impl MultiDimensional {
         MultiDimensional {
             cells: vec![vec![vec![]]],
             bounds: 0,
-            chunk_radius: 0,
-            chunk_count: 0,
         }
     }
 
@@ -79,12 +68,11 @@ impl MultiDimensional {
         self.cells[index.x][index.y][index.z]
     }
 
-
     pub fn get_bounds(&self) -> i32 {
         self.bounds as i32
     }
 
-    pub fn get_count(&self) -> usize{
+    pub fn get_count(&self) -> usize {
         let mut total = 0;
         for x in 0..self.bounds {
             for y in 0..self.bounds {
@@ -102,7 +90,11 @@ impl MultiDimensional {
         if new_bounds != self.bounds {
             self.cells.clear();
             // Source: https://programming-idioms.org/idiom/27/create-a-3-dimensional-array/452/rust
-            self.cells = vec![vec![vec![SimpleCell::new(); new_bounds as usize]; new_bounds as usize]; new_bounds as usize];
+            self.cells =
+                vec![
+                    vec![vec![SimpleCell::new(); new_bounds as usize]; new_bounds as usize];
+                    new_bounds as usize
+                ];
             self.bounds = new_bounds;
         }
 
@@ -129,7 +121,7 @@ impl MultiDimensional {
                                 cell.state = rule.states;
                                 spawns.push(index)
                             }
-                        },
+                        }
                         // Alive cell
                         false => {
                             let num_states = rule.states;
@@ -143,7 +135,7 @@ impl MultiDimensional {
                                 // Decrement cell state
                                 cell.state -= 1;
                             }
-                        },
+                        }
                     }
                     // Save the cell
                     self.cells[index.x][index.y][index.z] = cell;
@@ -152,41 +144,31 @@ impl MultiDimensional {
         }
         // Update each cell's neighbours
         for position in spawns {
-            self.update_neighbours(
-                rule,
-                position,
-                true
-            );
+            self.update_neighbours(rule, position, true);
         }
 
         for position in deaths {
-            self.update_neighbours(
-                rule,
-                position,
-                false
-            );
+            self.update_neighbours(rule, position, false);
         }
     }
 
     fn update_neighbours(&mut self, rule: &Rule, pos: Position, inc: bool) {
         for n in rule.neighbourhood.get_neighbourhood_iter() {
-            let neighbour_pos = Position::from_vec(
-                self.wrap(
-                    IVec3 {
-                        x: pos.x as i32,
-                        y: pos.y as i32,
-                        z: pos.z as i32
-                    } + *n
-                )
-            );
+            let neighbour_pos = Position::from_vec(self.wrap(
+                IVec3 {
+                    x: pos.x as i32,
+                    y: pos.y as i32,
+                    z: pos.z as i32,
+                } + *n,
+            ));
 
             match inc {
                 true => {
                     self.cells[neighbour_pos.x][neighbour_pos.y][neighbour_pos.z].neighbours += 1;
-                },
+                }
                 false => {
                     self.cells[neighbour_pos.x][neighbour_pos.y][neighbour_pos.z].neighbours -= 1;
-                },
+                }
             }
         }
     }
@@ -215,8 +197,8 @@ impl crate::cells::Sim for MultiDimensional {
 
     fn render(&self, renderer: &mut CellRenderer) {
         // Convert 3D vector into 1D vector
-        for (index, cell) in
-        self.cells
+        for (index, cell) in self
+            .cells
             // Flatten vec
             .concat()
             // Flatten vector again
@@ -224,7 +206,8 @@ impl crate::cells::Sim for MultiDimensional {
             // Iterate through each cell
             .iter()
             // Add a counter to determine index
-            .enumerate() {
+            .enumerate()
+        {
             // println!("Cell @ {index} is {:#?}", cell);
             renderer.set(index, cell.state, cell.neighbours);
         }
@@ -257,22 +240,46 @@ mod multi_dimensional {
         let cells = vec![
             vec![
                 vec![
-                    SimpleCell { state: 5, neighbours: 0},
-                    SimpleCell { state: 1, neighbours: 0},
+                    SimpleCell {
+                        state: 5,
+                        neighbours: 0,
+                    },
+                    SimpleCell {
+                        state: 1,
+                        neighbours: 0,
+                    },
                 ],
                 vec![
-                    SimpleCell { state: 0, neighbours: 0},
-                    SimpleCell { state: 1, neighbours: 0},
+                    SimpleCell {
+                        state: 0,
+                        neighbours: 0,
+                    },
+                    SimpleCell {
+                        state: 1,
+                        neighbours: 0,
+                    },
                 ],
             ],
             vec![
                 vec![
-                    SimpleCell { state: 2, neighbours: 0},
-                    SimpleCell { state: 1, neighbours: 0},
+                    SimpleCell {
+                        state: 2,
+                        neighbours: 0,
+                    },
+                    SimpleCell {
+                        state: 1,
+                        neighbours: 0,
+                    },
                 ],
                 vec![
-                    SimpleCell { state: 0, neighbours: 0},
-                    SimpleCell { state: 1, neighbours: 0},
+                    SimpleCell {
+                        state: 0,
+                        neighbours: 0,
+                    },
+                    SimpleCell {
+                        state: 1,
+                        neighbours: 0,
+                    },
                 ],
             ],
         ];
@@ -284,8 +291,6 @@ mod multi_dimensional {
         let multi_threaded = MultiDimensional {
             cells,
             bounds: bounds as i32,
-            chunk_radius,
-            chunk_count,
         };
 
         // Validate there are two dead cells in the grid

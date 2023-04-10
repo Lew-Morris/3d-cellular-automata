@@ -1,9 +1,5 @@
 use bevy::{
-    math::{
-        ivec3,
-        IVec3,
-        Vec4
-    },
+    math::{ivec3, IVec3, Vec4},
     prelude::Color,
 };
 use rand::Rng;
@@ -72,44 +68,26 @@ mod conversions {
 
         // Test case 1
         let index = 0;
-        assert_eq!(
-            ivec3(0, 0, 0),
-            idx_to_pos(index, bounds)
-        );
+        assert_eq!(ivec3(0, 0, 0), idx_to_pos(index, bounds));
 
         // Test case 2
         let index = 55;
-        assert_eq!(
-            ivec3(23, 1, 0),
-            idx_to_pos(index, bounds)
-        );
+        assert_eq!(ivec3(23, 1, 0), idx_to_pos(index, bounds));
 
         // Test case 3
         let index = 32768;
-        assert_eq!(
-            ivec3(0, 0, 32),
-            idx_to_pos(index, bounds)
-        );
+        assert_eq!(ivec3(0, 0, 32), idx_to_pos(index, bounds));
     }
 
     #[test]
     fn test_idx_to_pos() {
         // Test case 1
-        assert_eq!(
-            55,
-            pos_to_idx(ivec3(23, 1, 0), 32)
-        );
+        assert_eq!(55, pos_to_idx(ivec3(23, 1, 0), 32));
 
         // Test case 2
-        assert_eq!(
-            0,
-            pos_to_idx(ivec3(0, 0, 0), 32)
-        );
+        assert_eq!(0, pos_to_idx(ivec3(0, 0, 0), 32));
 
         // Test case 3
-        assert_eq!(
-            33824,
-            pos_to_idx(ivec3(32, 32, 32), 32)
-        );
+        assert_eq!(33824, pos_to_idx(ivec3(32, 32, 32), 32));
     }
 }

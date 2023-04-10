@@ -1,19 +1,7 @@
+use crate::{neighbours::Neighbourhood, utilities::state_colour};
 use bevy::prelude::Color;
-use crate::{
-    neighbours::Neighbourhood,
-    utilities::{
-        state_colour,
-    },
-};
 use std::ops::RangeInclusive;
-use ColourMethod::{
-    Colour1,
-    Colour2,
-    State,
-    DistToCenter,
-    Neighbour,
-    Index,
-};
+use ColourMethod::{Colour1, Colour2, DistToCenter, Index, Neighbour, State};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Value([bool; 27]);
@@ -45,7 +33,7 @@ impl Value {
 
     pub fn change_value(mut self, index: usize) -> Self {
         self.0[index] = !self.0[index];
-        return self
+        return self;
     }
 
     pub fn get_value(self, index: usize) -> bool {
@@ -90,34 +78,16 @@ impl ColourMethod {
             Colour2 => c2,
             State => {
                 let gradient = current_state as f32 / total_states as f32;
-                state_colour(
-                    c1,
-                    c2,
-                    gradient
-                )
+                state_colour(c1, c2, gradient)
             }
-            DistToCenter => {
-                state_colour(
-                    c1,
-                    c2,
-                    distance_to_centre
-                )
-            },
+            DistToCenter => state_colour(c1, c2, distance_to_centre),
             Neighbour => {
                 let gradient = neighbours as f32 / 26f32;
-                state_colour(
-                    c1,
-                    c2,
-                    gradient
-                )
+                state_colour(c1, c2, gradient)
             }
             Index => {
                 let gradient = index as f32 / total_cells as f32;
-                state_colour(
-                    c1,
-                    c2,
-                    gradient
-                )
+                state_colour(c1, c2, gradient)
             }
         }
     }

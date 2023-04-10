@@ -1,4 +1,4 @@
-use bevy::math::{IVec3};
+use bevy::math::IVec3;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Neighbourhood {

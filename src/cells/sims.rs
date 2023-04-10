@@ -1,38 +1,19 @@
+use bevy::prelude::IntoSystemConfig;
 use bevy::{
-    prelude::{
-        Color,
-        Plugin,
-        Query,
-        ResMut,
-        Resource,
-    },
+    prelude::{Color, Plugin, Query, ResMut, Resource},
     tasks::AsyncComputeTaskPool,
 };
-use bevy::prelude::IntoSystemConfig;
 
-use bevy_egui::{
-    egui::{
-        color_picker,
-        Ui,
-    },
-};
+use bevy_egui::egui::{color_picker, Ui};
 
 use crate::{
     cells::Sim,
-    render::{
-        CellRenderer,
-        InstanceData,
-        InstanceMaterialData,
-    },
-    rule::{
-        ColourMethod,
-        Rule,
-    },
+    render::{CellRenderer, InstanceData, InstanceMaterialData},
+    rule::{ColourMethod, Rule},
     utilities,
 };
 
 use crate::cells::settings::*;
-
 
 #[derive(Clone)]
 pub struct Example {
@@ -114,8 +95,7 @@ impl Sims {
 pub struct SimsPlugin;
 impl Plugin for SimsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app
-            .insert_resource(Sims::new())
+        app.insert_resource(Sims::new())
             .add_system(settings.before(update))
             .add_system(update);
     }

@@ -1,11 +1,6 @@
-use bevy::{
-    tasks::TaskPool
-};
+use bevy::tasks::TaskPool;
 
-use crate::{
-    rule::Rule,
-    render::CellRenderer
-};
+use crate::{render::CellRenderer, rule::Rule};
 
 pub trait Sim: Send + Sync {
     fn update(&mut self, rule: &Rule, task_pool: &TaskPool);
@@ -32,6 +27,6 @@ pub use sims::*;
 pub mod settings;
 pub use settings::*;
 
-pub mod single_threaded;
 pub mod multi_dimensional;
 // pub mod multi_threaded;
+pub mod single_threaded;

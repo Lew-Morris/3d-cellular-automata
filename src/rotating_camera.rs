@@ -1,16 +1,7 @@
 use bevy::{
-    math::{
-        Quat,
-        vec3
-    },
-    prelude::{
-        App,
-        Plugin,
-        Query,
-        Transform,
-        Vec3,
-    },
     ecs::component::Component,
+    math::{vec3, Quat},
+    prelude::{App, Plugin, Query, Transform, Vec3},
 };
 
 #[derive(Component)]
