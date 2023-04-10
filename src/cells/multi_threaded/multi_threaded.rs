@@ -1,72 +1,24 @@
-// use std::thread::spawn;
-use bevy::{
-    math::{
-        IVec3,
-    },
-    tasks::TaskPool,
-};
 use crate::{
     render::CellRenderer,
     rule::Rule,
-    utilities::{
-        wrap,
-        default_noise,
-        get_centre,
-    }
+    utilities,
+    utilities::{default_noise, get_centre, wrap},
 };
+use bevy::math::ivec3;
+use bevy::{math::IVec3, tasks::TaskPool};
+use bevy::utils::petgraph::visit::Walker;
+use futures_lite::future;
 
-/*
-todo!
-    - Split the cube into x amount of chunks
-        - Likely to be the number of CPUS/threads on the system
-    - Give each thread its chunk of the cube, with an extra layer on each side as a boundary
-        - The thread would only need to do the cells which are not in the boundary
-    - Wait for each thread to finish, then render
-    - This is called `Domain Decomposition`
- */
+extern crate num_cpus;
 
-// CONSTANTS
-#[allow(unused)] // todo! remove
-const CHUNK_SIZE: usize = 16;
-#[allow(unused)] // todo! remove
-const CELLS_PER_CHUNK: usize = CHUNK_SIZE.pow(3);
-
-// todo! Move or remove
-// fn bounds_to_chunk(bounds: i32) -> usize {
-//     (bounds as usize + CHUNK_SIZE - 1) / CHUNK_SIZE
-// }
-//
-// fn offset_to_position(offset: usize) -> IVec3 {
-//     utilities::idx_to_pos(offset as i32, CHUNK_SIZE as i32)
-// }
-//
-// fn is_border(pos: IVec3, offset: i32) -> bool {
-//     pos.x - offset <= 0 || pos.x + offset >= (CHUNK_SIZE - 1) as i32 ||
-//         pos.y - offset <= 0 || pos.y + offset >= (CHUNK_SIZE - 1) as i32 ||
-//         pos.z - offset <= 0 || pos.z + offset >= (CHUNK_SIZE - 1) as i32
-// }
-
-#[derive(Clone, Copy, Debug)]
-pub struct Position {
-    pub x: usize,
-    pub y: usize,
-    pub z: usize,
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct ParallelCell {
-    pub state: u8,
-    pub neighbours: u8,
-    // pub position: Position,
-    // chunk_index: usize,
+pub fn is_dead(value: u8) -> bool {
+    value == 0
 }
 
 #[derive(Clone)]
-pub struct MultiThreaded {
-    pub cells: Vec<Vec<Vec<ParallelCell>>>,
-    pub bounds: i32,
-    pub chunk_radius: usize,
-    pub chunk_count: usize,
+pub struct ParallelCell {
+    state: u8,
+    neighbours: u8,
 }
 
 impl ParallelCell {
@@ -74,228 +26,263 @@ impl ParallelCell {
         ParallelCell {
             state: 0,
             neighbours: 0,
-            // chunk_index: 0,
-            // position: Position::new(),
         }
     }
 
-    pub fn is_dead(&self) -> bool { self.state == 0}
+    fn get_state(&self) -> u8 {
+        self.state
+    }
+
+    fn set_state(&mut self, state: u8) -> u8 {
+        self.state = state;
+        self.state
+    }
+
+    fn is_dead(&self) -> bool {
+        self.state == 0
+    }
 }
 
-impl Position {
-    fn new(x: i32, y: i32, z: i32) -> Position {
-        Position {
-            x: x as usize,
-            y: y as usize,
-            z: z as usize,
-        }
-    }
-
-    fn from_vec(pos: IVec3) -> Position {
-        Position {
-            x: pos.x as usize,
-            y: pos.y as usize,
-            z: pos.z as usize,
-        }
-    }
-//
-//     #[allow(dead_code)] // todo! remove
-//     pub fn is_boundary(&self) {
-//         todo!()
-//     }
+#[derive(Clone)]
+pub struct Chunk {
+    cells: Vec<Vec<Vec<ParallelCell>>>,
+    bounds: usize,
+    index: u8,
 }
 
-unsafe impl Sync for ParallelCell {}
-unsafe impl Send for ParallelCell {}
-
-impl MultiThreaded {
-    #[allow(dead_code)] // todo! remove
-    pub fn new() -> Self {
-        MultiThreaded {
+impl Chunk {
+    fn new(index: u8) -> Chunk {
+        Chunk {
             cells: vec![vec![vec![]]],
             bounds: 0,
-            chunk_radius: 0,
-            chunk_count: 0,
+            index,
         }
     }
 
-    pub fn get_cell(&self, index: Position) -> ParallelCell {
-        // println!("Index: {:#?}", index);
-        // println!("Cell Length: {:#?}", self.cells.len());
-        self.cells[index.x][index.y][index.z]
+    fn get_bounds(&self) -> usize {
+        self.bounds
     }
 
-    pub fn get_bounds(&self) -> i32 {
-        self.bounds as i32
-        // (self.chunk_radius * CHUNK_SIZE) as i32
+    fn set_bounds(&mut self, bounds: usize) -> usize {
+        self.bounds = bounds;
+        self.bounds
+    }
+}
+
+#[derive(Clone)]
+pub struct MultiThreaded {
+    chunks: Vec<Chunk>,
+    bounds: usize,
+}
+
+impl MultiThreaded {
+    pub fn new() -> MultiThreaded {
+        MultiThreaded {
+            chunks: vec![],
+            bounds: 0,
+        }
     }
 
-    // fn get_centre(&self) -> IVec3 {
-    //     let centre = self.get_bounds() / 2;
-    //     ivec3(
-    //         centre,
-    //         centre,
-    //         centre,
-    //     )
+    // pub fn get_bounds(&self) -> usize {
+    //     self.bounds
     // }
 
-    pub fn get_count(&self) -> usize{
+    pub fn set_bounds(&mut self, bounds: usize) -> usize {
+        self.bounds = bounds;
+        self.bounds
+    }
+
+    pub fn get_count(&self) -> usize {
         let mut total = 0;
-        for x in 0..self.bounds {
-            for y in 0..self.bounds {
-                for z in 0..self.bounds {
-                    if !self.cells[x as usize][y as usize][z as usize].is_dead() {
-                        total += 1;
-                    }
+        for chunks in self.chunks.iter() {
+            let mut chunk_total = 0;
+            for cell in chunks.cells.concat().concat().iter() {
+                if !cell.is_dead() {
+                    chunk_total += 1;
                 }
             }
+            total += chunk_total;
         }
         total
     }
 
-    // fn get_total_cells(&self) -> i32 {
-    //     self.bounds.pow(3)
-    // }
+    fn update(&mut self, rule: &Rule, tasks: &TaskPool) {
+        let mut update_tasks = vec![];
+        // for each chunk
+        for (index, chunk) in self.chunks.iter().enumerate() {
+            // copy all of the values
+            let mut cells = chunk.cells.clone();
+            let rule = rule.clone();
 
-    pub fn set_bounds(&mut self, new_bounds: i32) -> i32 {
-        if new_bounds != self.bounds {
-            self.cells.clear();
-            // Source: https://programming-idioms.org/idiom/27/create-a-3-dimensional-array/452/rust
-            self.cells = vec![vec![vec![ParallelCell::new(); new_bounds as usize]; new_bounds as usize]; new_bounds as usize];
-            self.bounds = new_bounds;
+            // create two vectors to store spawns and deaths
+            let mut chunk_spawns = vec![];
+            let mut chunk_deaths = vec![];
+            // Add this to the update tasks vec with async move
+            update_tasks.push(tasks.spawn(async move {
+                Self::update_values(&mut cells, &rule, &mut chunk_spawns, &mut chunk_deaths, index);
+                (index, chunk_spawns, chunk_deaths)
+            }));
         }
 
-        self.bounds as i32
+        // collect spawns & deaths.
+        let mut chunk_spawns = vec![];
+        let mut chunk_deaths = vec![];
+        for task in update_tasks {
+            let (index, spawns, deaths) = future::block_on(task);
+            chunk_spawns.push((index, spawns));
+            chunk_deaths.push(deaths);
+        }
+
+        // update neighbours.
+        let mut neighbour_tasks = vec![];
+        for ((index, spawns), deaths) in chunk_spawns.into_iter().zip(chunk_deaths) {
+            let mut neighbours = self.chunks[index].clone(); // todo! need to get the index
+            let rule = rule.clone(); // shrug
+
+            neighbour_tasks.push(tasks.spawn(async move {
+                for index in spawns.iter() {
+                    Self::update_neighbours(&mut neighbours, &rule, index, true);
+                }
+
+                for index in deaths.iter() {
+                    Self::update_neighbours(&mut neighbours, &rule, index, false);
+                }
+            }));
+        }
+
+        for task in neighbour_tasks {
+            future::block_on(task);
+        }
     }
 
-    // fn update_cells() {
-    //     // todo Not sure if needed
-    // }
-
-    // todo! write as linear, than make parallel
-    fn update(&mut self, rule: &Rule) {
-        //Initialize two empty vectors, spawns and deaths, to store cell positions
-        let mut spawns: Vec<Position> = vec![];
-        let mut deaths: Vec<Position> = vec![];
-
-        // todo! Consider using .iter().enumerate() to get values
-
-        // for (x, outer_vec) in self.cells.iter().enumerate() {
-        //     for (y, inner_vec) in outer_vec.iter().enumerate() {
-        //         for (z, cell) in inner_vec.iter().enumerate() {
-        //             let index = Position::new(x as i32, y as i32, z as i32);
-        //             println!("Cell @ {:#?} has values {:#?}", index, cell);
-        //         }
-        //     }
-        // }
-
-        // Loop through each cell
-        for x in 0..=self.bounds - 1 {
-            for y in 0..=self.bounds - 1 {
-                for z in 0..=self.bounds - 1 {
-                    let index = Position::new(x, y, z);
-                    let mut cell = self.get_cell(index);
-
-                    // Check cell state (dead/alive)
-                    match cell.is_dead() {
+    fn update_values(
+        cells: &mut Vec<Vec<Vec<ParallelCell>>>,
+        rule: &Rule,
+        chunk_spawns: &mut Vec<Vec<usize>>,
+        chunk_deaths: &mut Vec<Vec<usize>>,
+        index: usize,
+    ) -> usize {
+        // Loop through each cell in the chunk
+        for (x, outer) in cells.iter_mut().enumerate() {
+            for (y, inner) in outer.iter_mut().enumerate() {
+                for (z, mut cell) in inner.iter_mut().enumerate() {
+                    let position = vec![x, y, z];
+                    // Check the rules
+                    if cell.is_dead() {
+                        if rule.birth.is_valid(cell.neighbours) {
+                            // Set cell state to rule states
+                            cell.state = rule.states;
+                            // Add position to spawns
+                            chunk_spawns.push(position)
+                        }
+                    } else if cell.state < rule.states || !rule.survival.is_valid(cell.neighbours) {
                         // Dead cell
-                        true => {
+                        if cell.is_dead() {
                             // Spawn a new cell if it has a valid number of neighbours
                             if rule.birth.is_valid(cell.neighbours) {
                                 cell.state = rule.states;
-                                spawns.push(index)
+                                chunk_spawns.push(position)
                             }
-                        },
-                        // Alive cell
-                        false => {
+                        }
+                        // Live cell
+                        else {
                             let num_states = rule.states;
                             let valid_survival = rule.survival.is_valid(cell.neighbours);
 
                             // Kill cell if it has too few states, or does not have enough to survive
                             if cell.state < num_states || !valid_survival {
                                 if cell.state == num_states {
-                                    deaths.push(index);
+                                    chunk_deaths.push(position);
                                 }
-                                // Decrement cell state
+                                // Decrement cell's state
                                 cell.state -= 1;
                             }
-                        },
+                        }
                     }
                 }
             }
         }
-
-        // todo! Discussion: Would this be parallel or linear?
-        // Linear would be easier, but would lead to lower performance
-
-        // Update each cell's neighbours
-        for position in spawns {
-            self.update_neighbours(
-                rule,
-                position,
-                true
-            );
-        }
-
-        for position in deaths {
-            self.update_neighbours(
-                rule,
-                position,
-                false
-            );
-        }
+        index
     }
 
-    fn update_neighbours(&mut self, rule: &Rule, pos: Position, inc: bool) {
+    fn update_neighbours(neighbours: &mut Chunk, rule: &Rule, pos: &Vec<usize>, inc: bool) {
         for n in rule.neighbourhood.get_neighbourhood_iter() {
-            let neighbour_pos = Position::from_vec(self.wrap(IVec3 { x: pos.x as i32, y: pos.y as i32, z: pos.z as i32 } + *n));
+            let pos = IVec3::new(pos[1] as i32, pos[2] as i32, pos[3] as i32);
+            let neighbour_pos = wrap(pos + *n, neighbours.bounds as i32);
 
             match inc {
                 true => {
-                    self.get_cell(neighbour_pos).neighbours += 1;
-                },
+                    neighbours.cells[neighbour_pos.x as usize][neighbour_pos.y as usize]
+                        [neighbour_pos.z as usize]
+                        .neighbours += 1;
+                }
                 false => {
-                    self.get_cell(neighbour_pos).neighbours -= 1;
-                },
+                    neighbours.cells[neighbour_pos.x as usize][neighbour_pos.y as usize]
+                        [neighbour_pos.z as usize]
+                        .neighbours -= 1;
+                }
             }
         }
     }
 
+    fn get_centre(&self) -> IVec3 {
+        let centre = (self.bounds / 2) as i32;
+        ivec3(
+            centre,
+            centre,
+            centre,
+        )
+    }
+
     fn wrap(&self, pos: IVec3) -> IVec3 {
-        wrap(pos, self.bounds)
+        todo!()
     }
 
     fn spawn_noise(&mut self, rule: &Rule) {
-        default_noise(get_centre(self.bounds), |pos| {
-            let position = Position::from_vec(pos);
-            let dead = self.get_cell(position).is_dead();
+        let center = self.get_centre();
+        let bounds = self.bounds;
 
-            if dead {
-                self.get_cell(position).state = rule.states;
-                self.update_neighbours(rule, position, true);
-            }
+        default_noise(center, |pos| {
+            let index = utilities::pos_to_idx(
+                wrap(pos, bounds as i32),
+                self.bounds as i32
+            );
+
+            // todo! Update cell values
         });
     }
 }
 
 impl crate::cells::Sim for MultiThreaded {
-    fn update(&mut self, rule: &Rule, _task_pool: &TaskPool) {
-        self.update(rule);
+    fn update(&mut self, rule: &Rule, task_pool: &TaskPool) {
+        /*
+            Domain Decomposition
+            - Split the cube into x amount of chunks
+                - Likely to be the number of CPUS/threads on the system
+            - Give each thread its chunk of the cube, with an extra layer on each side as padding
+                - The thread would only need to do the cells which are not in the boundary
+            - Wait for each thread to finish, then render
+            - This is called `Domain Decomposition`
+
+            Cell Index-Based
+            - assign a single cell to each thread
+            - Write the output from the thread to a new MultiThreaded instance
+            - Do for every cell
+
+        */
+
+        self.update(rule, task_pool);
     }
 
     fn render(&self, renderer: &mut CellRenderer) {
-        // Convert 3D vector into 1D vector
-        for (index, cell) in
-        self.cells
-            // Flatten vec
-            .concat()
-            // Flatten vector again
-            .concat()
-            // Iterate through each cell
-            .iter()
-            // Add a counter to determine index
-            .enumerate() {
-            renderer.set(index, cell.state, cell.neighbours);
+        for chunk in self.chunks.iter() {
+            for (index, cell) in chunk.cells.concat().concat().iter().enumerate() {
+                renderer.set(
+                    index,
+                    cell.state,
+                    cell.neighbours
+                )
+            }
         }
     }
 
@@ -304,60 +291,14 @@ impl crate::cells::Sim for MultiThreaded {
     }
 
     fn count(&self) -> usize {
-        self.get_count()
+        self.get_count() * num_cpus::get()
     }
 
     fn get_bounds(&self) -> i32 {
-        self.get_bounds()
+        self.get_bounds() as i32
     }
 
     fn set_bounds(&mut self, new_bounds: i32) -> i32 {
-        self.set_bounds(new_bounds)
-    }
-}
-
-// TESTS
-#[cfg(test)]
-mod multi_threading {
-    use super::*;
-
-    #[test]
-    fn test_count_cells() {
-        let cells = vec![
-            vec![
-                vec![
-                    ParallelCell { state: 5, neighbours: 0},
-                    ParallelCell { state: 1, neighbours: 0},
-                ],
-                vec![
-                    ParallelCell { state: 0, neighbours: 0},
-                    ParallelCell { state: 1, neighbours: 0},
-                ],
-            ],
-            vec![
-                vec![
-                    ParallelCell { state: 2, neighbours: 0},
-                    ParallelCell { state: 1, neighbours: 0},
-                ],
-                vec![
-                    ParallelCell { state: 0, neighbours: 0},
-                    ParallelCell { state: 1, neighbours: 0},
-                ],
-            ],
-        ];
-
-        let bounds: usize = 2;
-        let chunk_radius: usize = 1;
-        let chunk_count: usize = (bounds * 2 + 1) / (chunk_radius * 2 + 1);
-
-        let multi_threaded = MultiThreaded {
-            cells,
-            bounds: bounds as i32,
-            chunk_radius,
-            chunk_count,
-        };
-
-        // Validate there are two dead cells in the grid
-        assert_eq!(multi_threaded.get_count(), 6);
+        self.set_bounds(new_bounds as usize) as i32
     }
 }

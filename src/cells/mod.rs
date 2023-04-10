@@ -28,5 +28,5 @@ pub mod settings;
 pub use settings::*;
 
 pub mod multi_dimensional;
-// pub mod multi_threaded;
+pub mod multi_threaded;
 pub mod single_threaded;
