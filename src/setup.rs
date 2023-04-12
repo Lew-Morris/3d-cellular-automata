@@ -8,6 +8,8 @@ use bevy::{
 
 use bevy_flycam::prelude::*;
 
+// use crate::cells::multi_threaded;
+use crate::color_method::ColourMethod::*;
 use crate::{
     cells::{
         multi_dimensional,
@@ -18,19 +20,8 @@ use crate::{
     },
     neighbours::Neighbourhood::{Moore, VonNeumann},
     render::{InstanceData, InstanceMaterialData},
-    rule::{ColourMethod, Rule, Value},
+    rule::{Rule, Value},
 };
-use crate::cells::multi_threaded;
-
-// |-------------|
-// | DIAGNOSTICS | - Framerate information
-// |-------------|
-// use bevy::{
-//     diagnostic::{
-//         FrameTimeDiagnosticsPlugin,
-//         LogDiagnosticsPlugin
-//     },
-// };
 
 pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims: ResMut<Sims>) {
     sims.add_sim(
@@ -57,7 +48,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             states: 10,
             neighbourhood: Moore,
         },
-        colour_method: ColourMethod::State,
+        colour_method: State,
         colour1: Color::RED,
         colour2: Color::GREEN,
     });
@@ -70,7 +61,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             states: 2,
             neighbourhood: VonNeumann,
         },
-        colour_method: ColourMethod::Neighbour,
+        colour_method: Neighbour,
         colour1: Color::BLACK,
         colour2: Color::PINK,
     });
@@ -83,7 +74,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             states: 50,
             neighbourhood: Moore,
         },
-        colour_method: ColourMethod::State,
+        colour_method: State,
         colour1: Color::RED,
         colour2: Color::CYAN,
     });
@@ -96,7 +87,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             states: 25,
             neighbourhood: Moore,
         },
-        colour_method: ColourMethod::State,
+        colour_method: State,
         colour1: Color::LIME_GREEN,
         colour2: Color::rgb(47.0, 0.0, 255.0),
     });
@@ -109,7 +100,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             states: 50,
             neighbourhood: Moore,
         },
-        colour_method: ColourMethod::DistToCenter,
+        colour_method: Index,
         colour1: Color::WHITE,
         colour2: Color::BLACK,
     });
@@ -122,7 +113,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
             states: 50,
             neighbourhood: Moore,
         },
-        colour_method: ColourMethod::State,
+        colour_method: State,
         colour1: Color::LIME_GREEN,
         colour2: Color::rgb(47.0, 0.0, 255.0),
     });
@@ -151,6 +142,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
     ));
 
     // Spawn Camera
+    // https://bevy-cheatbook.github.io/window/clear-color.html
     commands
         .spawn(Camera3dBundle {
             transform: Transform::from_xyz(50.0, 25.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
