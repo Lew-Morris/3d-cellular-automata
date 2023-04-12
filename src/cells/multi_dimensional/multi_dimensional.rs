@@ -285,15 +285,13 @@ mod multi_dimensional {
         ];
 
         let bounds: usize = 2;
-        let chunk_radius: usize = 1;
-        let chunk_count: usize = (bounds * 2 + 1) / (chunk_radius * 2 + 1);
 
-        let multi_threaded = MultiDimensional {
+        let multi_dimensional = MultiDimensional {
             cells,
             bounds: bounds as i32,
         };
 
         // Validate there are two dead cells in the grid
-        assert_eq!(multi_threaded.get_count(), 6);
+        assert_eq!(multi_dimensional.get_count(), 6);
     }
 }
