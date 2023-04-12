@@ -1,4 +1,6 @@
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin,};
 use bevy::prelude::*;
+use bevy::window::PresentMode;
 use bevy_egui::EguiPlugin;
 // use bevy_fly_camera::FlyCameraPlugin;
 use bevy_flycam::prelude::*;
@@ -6,52 +8,70 @@ use bevy_flycam::prelude::*;
 use render::*;
 use setup::*;
 // use rotating_camera::RotatingCameraPlugin;
-use crate::state_changed::StateChangedEvent;
 
 mod cells;
+mod color_method;
 mod neighbours;
 mod render;
 mod rotating_camera;
 mod rule;
 mod setup;
-mod state_changed;
 mod utilities;
 
 fn main() {
+    //
     let mut task_pool_settings = TaskPoolOptions::default();
+    // Permit access to all available threads
     task_pool_settings.async_compute.percent = 1.0f32;
-    task_pool_settings.compute.percent = 0.0f32;
+    task_pool_settings.compute.percent = 1.0f32;
     task_pool_settings.io.percent = 1.0f32;
 
     // todo! add pause functionality
     // type Paused = bool;
-    // let state: Paused = true;
+    // let paused: Paused = true;
 
     App::new()
-        .add_event::<StateChangedEvent>()
+        // Add default plugins
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            // Set default window settings
+            // Adapted from: https://github.com/bevyengine/bevy/blob/main/examples/window/window_settings.rs
+            primary_window: Some(Window {
+                title: "3D Cellular Automata".into(),
+                resolution: (1920., 1080.).into(),
+                present_mode: PresentMode::AutoVsync,
+                // WASM config
+                fit_canvas_to_parent: true,
+                prevent_default_event_handling: false,
+                ..default()
+            }),
+            ..default()
+        }))
+        // Add task-pool settings
         .insert_resource(task_pool_settings)
-        // .insert_resource(state)
-        // todo! Add a setting to change the background colour, requires restart
-        .insert_resource(ClearColor(Color::rgb(0.0f32, 0.0f32, 0.0f32))) // Black background color
-        // .insert_resource(ClearColor(Color::rgb(0.9f32, 0.9f32, 0.9f32))) // Off-White background color
-        .add_plugins(DefaultPlugins)
+        // Default background color - Black
+        .insert_resource(ClearColor(Color::rgb(0.0f32, 0.0f32, 0.0f32)))
+        // Add EGUI (Settings UI library) plugin
         .add_plugin(EguiPlugin)
-        // .add_plugin(RotatingCameraPlugin)
+        // Add FlyCam plugin
         .add_plugin(NoCameraPlayerPlugin)
+        // Change FlyCam movement
         .insert_resource(MovementSettings {
             sensitivity: 0.00015, // default: 0.00012
-            speed: 12.0,          // default: 12.0
+            speed: 15.0,          // default: 12.0
         })
+        // Change key bindings
         .insert_resource(KeyBindings {
             move_ascend: KeyCode::LShift,
             move_descend: KeyCode::LControl,
             ..Default::default()
         })
-        // .add_plugin(FlyCameraPlugin)
+        // Rendering plugin
         .add_plugin(CustomMaterialPlugin)
         .add_plugin(cells::SimsPlugin)
-        // .add_plugin(FrameTimeDiagnosticsPlugin::default()) // Debugging
-        // .add_plugin(LogDiagnosticsPlugin::default()) // Debugging
+        // Framerate plugin
+        .add_plugin(FrameTimeDiagnosticsPlugin::default()) // Debugging
+        // Setup the simulation
         .add_startup_system(setup)
+        // Begin!
         .run();
 }
