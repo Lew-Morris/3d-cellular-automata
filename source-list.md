@@ -11,3 +11,6 @@
   - https://programming-idioms.org/idiom/27/create-a-3-dimensional-array/452/rust
 - Cell_render.rs
   - [link](https://bevyengine.org/examples/shader/shader-instancing/)
+- Coding style
+  - https://medium.com/coding-skills/clean-code-101-meaningful-names-and-functions-bf450456d90c
+ 

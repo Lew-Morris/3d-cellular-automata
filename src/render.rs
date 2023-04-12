@@ -1,45 +1,24 @@
 // Source: Bevy Examples (GitHub) - https://github.com/bevyengine/bevy/blob/main/examples/shader/shader_instancing.rs
+use bevy::render::RenderSet;
 use bevy::{
-    pbr::{
-        SetMeshBindGroup,
-        SetMeshViewBindGroup,
-        MeshUniform,
-        MeshPipelineKey,
-        MeshPipeline,
-    },
+    core_pipeline::core_3d::Transparent3d,
+    ecs::{query::QueryItem, system::lifetimeless::*, system::SystemParamItem},
+    pbr::{MeshPipeline, MeshPipelineKey, MeshUniform, SetMeshBindGroup, SetMeshViewBindGroup},
     prelude::*,
     render::{
-        render_phase::{
-            AddRenderCommand,
-            DrawFunctions,
-            RenderCommandResult,
-            RenderPhase,
-            SetItemPipeline,
-            TrackedRenderPass,
-            PhaseItem,
-            RenderCommand,
-        },
+        extract_component::{ExtractComponent, ExtractComponentPlugin},
+        mesh::{GpuBufferInfo, MeshVertexBufferLayout},
         render_asset::RenderAssets,
-        mesh::{
-            GpuBufferInfo,
-            MeshVertexBufferLayout
+        render_phase::{
+            AddRenderCommand, DrawFunctions, PhaseItem, RenderCommand, RenderCommandResult,
+            RenderPhase, SetItemPipeline, TrackedRenderPass,
         },
         render_resource::*,
         renderer::RenderDevice,
-        extract_component::{ExtractComponent, ExtractComponentPlugin},
-        view::{
-            ExtractedView,
-        },
+        view::ExtractedView,
         RenderApp,
     },
-    core_pipeline::core_3d::Transparent3d,
-    ecs::{
-        system::lifetimeless::*,
-        query::QueryItem,
-        system::SystemParamItem,
-    }
 };
-use bevy::render::RenderSet;
 use bytemuck::{Pod, Zeroable};
 
 #[derive(Component, Deref)]

@@ -11,7 +11,8 @@ bevy_egui = "0.20.1"
 bytemuck = "*"
 rand = "*"
 futures-lite = "1.12.0"
-bevy_fly_camera = "0.10.0"
+bevy_flycam = { git = "https://github.com/sburris0/bevy_flycam" }
+num_cpus = "1.15.0"
 
 
 # Enable a small amount of optimization in debug mode

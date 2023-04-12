@@ -1,14 +1,10 @@
-use bevy::{
-    tasks::TaskPool
-};
+use bevy::tasks::TaskPool;
 
-use crate::{
-    rule::Rule,
-    render::CellRenderer
-};
+use crate::{render::CellRenderer, rule::Rule};
 
 pub trait Sim: Send + Sync {
     fn update(&mut self, rule: &Rule, task_pool: &TaskPool);
+
     fn render(&self, data: &mut CellRenderer);
 
     fn reset(&mut self) {
@@ -19,7 +15,7 @@ pub trait Sim: Send + Sync {
 
     fn spawn_noise(&mut self, rule: &Rule);
 
-    fn get_count(&self) -> usize;
+    fn count(&self) -> usize;
 
     fn get_bounds(&self) -> i32;
 
@@ -28,5 +24,9 @@ pub trait Sim: Send + Sync {
 
 pub mod sims;
 pub use sims::*;
+pub mod settings;
+pub use settings::*;
 
+pub mod multi_dimensional;
+pub mod multi_threaded;
 pub mod single_threaded;

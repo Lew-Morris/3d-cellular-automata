@@ -1,58 +1,27 @@
 use bevy::{
     prelude::{
-        Assets,
-        Camera3dBundle,
-        Color,
-        Commands,
-        default,
-        GlobalTransform,
-        Mesh,
-        ResMut,
-        shape,
-        Transform,
-        Vec3,
+        default, shape, Assets, Camera3dBundle, Color, Commands, GlobalTransform, Mesh, ResMut,
+        Transform, Vec3,
     },
-    render::view::{
-        ComputedVisibility,
-        NoFrustumCulling,
-        Visibility
-    },
+    render::view::{ComputedVisibility, NoFrustumCulling, Visibility},
 };
 
+use bevy_flycam::prelude::*;
+
+// use crate::cells::multi_threaded;
+use crate::color_method::ColourMethod::*;
 use crate::{
     cells::{
-        Example,
+        multi_dimensional,
         single_threaded,
+        Example,
+        // multi_threaded,
         Sims,
     },
-    neighbours::Neighbourhood::{
-        Moore,
-        VonNeumann,
-    },
-    render::{
-        InstanceData,
-        InstanceMaterialData,
-    },
-    rotating_camera::{
-        RotatingCamera,
-    },
-    rule::{
-        ColourMethod,
-        Rule,
-        Value,
-    },
+    neighbours::Neighbourhood::{Moore, VonNeumann},
+    render::{InstanceData, InstanceMaterialData},
+    rule::{Rule, Value},
 };
-// |-------------|
-// | DIAGNOSTICS | - Framerate information
-// |-------------|
-// use bevy::{
-//     diagnostic::{
-//         FrameTimeDiagnosticsPlugin,
-//         LogDiagnosticsPlugin
-//     },
-// };
-
-// use bevy_fly_camera::FlyCamera;
 
 pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims: ResMut<Sims>) {
     sims.add_sim(
@@ -60,41 +29,104 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         Box::new(single_threaded::SingleThreaded::new()),
     );
 
+    sims.add_sim(
+        "Multi-Dimensional Cell".into(),
+        Box::new(multi_dimensional::MultiDimensional::new()),
+    );
+
+    // sims.add_sim(
+    //     "Multi-Threaded Cell".into(),
+    //     Box::new(multi_threaded::MultiThreaded::new()),
+    // );
+
+    // todo! Add to its own system
     sims.add_example(Example {
-        name: "Builder".into(),
+        name: "Chaos".into(),
         rule: Rule {
             survival: Value::new(&[2, 6, 9]),
             birth: Value::new(&[4, 6, 8, 9, 10]),
             states: 10,
             neighbourhood: Moore,
         },
-        colour_method: ColourMethod::State,
+        colour_method: State,
         colour1: Color::RED,
         colour2: Color::GREEN,
     });
 
     sims.add_example(Example {
-        name: "Pyramid".into(),
+        name: "Expanding Pyramid".into(),
         rule: Rule {
             survival: Value::from_range(0..=6),
             birth: Value::new(&[1, 3]),
             states: 2,
             neighbourhood: VonNeumann,
         },
-
-        colour_method: ColourMethod::Neighbour,
+        colour_method: Neighbour,
         colour1: Color::BLACK,
         colour2: Color::PINK,
     });
 
-    sims.set_example(0);
+    sims.add_example(Example {
+        name: "Morphing Pathways".into(),
+        rule: Rule {
+            survival: Value::new(&[2, 6, 7, 8, 9, 10, 11, 14, 15]),
+            birth: Value::new(&[4]),
+            states: 50,
+            neighbourhood: Moore,
+        },
+        colour_method: State,
+        colour1: Color::RED,
+        colour2: Color::CYAN,
+    });
 
+    sims.add_example(Example {
+        name: "Crazy Patterns".into(),
+        rule: Rule {
+            survival: Value::new(&[2, 7, 10, 16, 19, 22, 25]),
+            birth: Value::new(&[4]),
+            states: 25,
+            neighbourhood: Moore,
+        },
+        colour_method: State,
+        colour1: Color::LIME_GREEN,
+        colour2: Color::rgb(47.0, 0.0, 255.0),
+    });
+
+    sims.add_example(Example {
+        name: "Pathways".into(),
+        rule: Rule {
+            survival: Value::new(&[2, 6, 7, 8, 9, 10, 11, 12]),
+            birth: Value::new(&[4]),
+            states: 50,
+            neighbourhood: Moore,
+        },
+        colour_method: Index,
+        colour1: Color::WHITE,
+        colour2: Color::BLACK,
+    });
+
+    sims.add_example(Example {
+        name: "Cycle States (SLOW)".into(),
+        rule: Rule {
+            survival: Value::new(&[2, 6, 7, 8, 9, 10, 11, 12]),
+            birth: Value::new(&[1, 4]),
+            states: 50,
+            neighbourhood: Moore,
+        },
+        colour_method: State,
+        colour1: Color::LIME_GREEN,
+        colour2: Color::rgb(47.0, 0.0, 255.0),
+    });
+
+    // todo! Use RNG to select a random example
+    sims.set_example(2);
+
+    // todo! Have a look into transparent cells for demo
     commands.spawn((
         meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
         Transform::from_xyz(0.0, 0.0, 0.0),
         GlobalTransform::default(),
-        InstanceMaterialData
-            (
+        InstanceMaterialData(
             (1..=10)
                 .flat_map(|x| (1..=100).map(move |y| (x as f32 / 10.0, y as f32 / 10.0)))
                 .map(|(x, y)| InstanceData {
@@ -110,18 +142,12 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
     ));
 
     // Spawn Camera
-    commands.spawn(Camera3dBundle {
-        // transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-        transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    })
-        // .insert(FlyCamera::default()); // Todo! Add movable camera
-        // .insert(Camera::default());
-        .insert(RotatingCamera::default());
-        // .insert(FlyCamera::default());
-
-    // commands.spawn(PointLightBundle {
-    //     transform: Transform::from_translation(Vec3::ONE * 3.0),
-    //     ..default()
-    // }).insert(PointLight::default());
+    // https://bevy-cheatbook.github.io/window/clear-color.html
+    commands
+        .spawn(Camera3dBundle {
+            transform: Transform::from_xyz(50.0, 25.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        })
+        // .insert(RotatingCamera::default());
+        .insert(FlyCam);
 }

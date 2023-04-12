@@ -1,18 +1,9 @@
-use bevy::{
-    math::IVec3,
-    tasks::TaskPool
-};
+use bevy::{math::IVec3, tasks::TaskPool};
 
 use crate::{
-    utilities::{
-        idx_to_pos,
-        pos_to_idx,
-        wrap,
-        get_centre,
-        default_noise,
-    },
     render::CellRenderer,
     rule::Rule,
+    utilities::{default_noise, get_centre, idx_to_pos, pos_to_idx, wrap},
 };
 
 #[derive(Clone, Copy)]
@@ -33,14 +24,12 @@ impl SimpleCell {
     pub fn is_dead(&self) -> bool {
         self.state == 0
     }
-
 }
 
 pub struct SingleThreaded {
     cells: Vec<SimpleCell>,
     bounds: i32,
     // group: u8, // todo! Different cell types that compete
-
 }
 
 impl SingleThreaded {
@@ -58,10 +47,8 @@ impl SingleThreaded {
             // Clear the array
             self.cells.clear();
             // Initialise vector of cells, with length bounds^3
-            self.cells.resize(
-                (new_bounds.pow(3)) as usize,
-                SimpleCell::new(),
-            );
+            self.cells
+                .resize((new_bounds.pow(3)) as usize, SimpleCell::new());
             // vec!(vec!(SimpleCell { value: 0, neighbours: 0 }));
             self.bounds = new_bounds;
         }
@@ -102,8 +89,7 @@ impl SingleThreaded {
             let index = self.pos_to_idx(neighbour_position);
             if inc {
                 self.cells[index].neighbours += 1;
-            }
-            else {
+            } else {
                 self.cells[index].neighbours -= 1;
             }
         }
@@ -115,12 +101,12 @@ impl SingleThreaded {
 
         for (index, cell) in self.cells.iter_mut().enumerate() {
             if cell.is_dead() {
-                if rule.birth.in_range(cell.neighbours) {
+                if rule.birth.is_valid(cell.neighbours) {
                     cell.state = rule.states;
                     spawns.push(index);
                 }
             } else {
-                if cell.state < rule.states || !rule.survival.in_range(cell.neighbours) {
+                if cell.state < rule.states || !rule.survival.is_valid(cell.neighbours) {
                     if cell.state == rule.states {
                         deaths.push(index);
                     }
@@ -183,7 +169,7 @@ impl crate::cells::Sim for SingleThreaded {
         self.spawn_noise(rule);
     }
 
-    fn get_count(&self) -> usize {
+    fn count(&self) -> usize {
         self.count_cells()
     }
 
@@ -202,10 +188,16 @@ mod tests {
 
     #[test]
     fn test_is_dead() {
-        let cell = SimpleCell { state: 0, neighbours: 0 };
+        let cell = SimpleCell {
+            state: 0,
+            neighbours: 0,
+        };
         assert!(cell.is_dead());
 
-        let cell = SimpleCell { state: 1, neighbours: 0 };
+        let cell = SimpleCell {
+            state: 1,
+            neighbours: 0,
+        };
         assert!(!cell.is_dead());
     }
 
