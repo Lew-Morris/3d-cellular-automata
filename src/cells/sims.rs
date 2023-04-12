@@ -4,16 +4,16 @@ use bevy::{
     tasks::AsyncComputeTaskPool,
 };
 
-use bevy_egui::egui::{color_picker, Ui};
 
 use crate::{
     cells::Sim,
     render::{CellRenderer, InstanceData, InstanceMaterialData},
-    rule::{ColourMethod, Rule},
+    rule::Rule,
     utilities,
 };
 
 use crate::cells::settings::*;
+use crate::color_method::ColourMethod;
 
 #[derive(Clone)]
 pub struct Example {
@@ -153,16 +153,4 @@ pub fn update(
     current.update_duration = update_dt;
     current.renderer = Some(renderer);
     current.rule = Some(rule);
-}
-
-pub fn colour_picker(ui: &mut Ui, colour: &mut Color) {
-    let mut c = [
-        (colour.r() * 255.0) as u8,
-        (colour.g() * 255.0) as u8,
-        (colour.b() * 255.0) as u8,
-    ];
-    color_picker::color_edit_button_srgb(ui, &mut c);
-    colour.set_r(c[0] as f32 / 255.0);
-    colour.set_g(c[1] as f32 / 255.0);
-    colour.set_b(c[2] as f32 / 255.0);
 }
