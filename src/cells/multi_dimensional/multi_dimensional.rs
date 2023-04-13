@@ -88,11 +88,14 @@ impl MultiDimensional {
 
     pub fn set_bounds(&mut self, new_bounds: i32) -> i32 {
         if new_bounds != self.bounds {
-            self.cells.clear();
             // Source: https://programming-idioms.org/idiom/27/create-a-3-dimensional-array/452/rust
             self.cells =
                 vec![
-                    vec![vec![SimpleCell::new(); new_bounds as usize]; new_bounds as usize];
+                    vec![
+                        vec![
+                            SimpleCell::new();
+                            new_bounds as usize];
+                        new_bounds as usize];
                     new_bounds as usize
                 ];
             self.bounds = new_bounds;
@@ -179,12 +182,9 @@ impl MultiDimensional {
 
     fn spawn_noise(&mut self, rule: &Rule) {
         default_noise(get_centre(self.bounds), |pos| {
-            let position = Position::from_vec(pos);
-            let dead = self.get_cell(position).is_dead();
-
-            if dead {
-                self.get_cell(position).state = rule.states;
-                self.update_neighbours(rule, position, true);
+            if self.cells[pos.x as usize][pos.y as usize][pos.z as usize].is_dead() {
+                self.cells[pos.x as usize][pos.y as usize][pos.z as usize].state = rule.states;
+                self.update_neighbours(rule,  Position::from_vec(pos), true);
             }
         });
     }

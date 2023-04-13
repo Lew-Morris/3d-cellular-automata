@@ -43,7 +43,7 @@ impl Sims {
         Sims {
             sims: vec![],
             active_sim: usize::MAX,
-            bounds: 32,
+            bounds: 50,
             update_duration: std::time::Duration::from_secs(0),
             renderer: Some(Box::new(CellRenderer::new())),
             rule: None,
