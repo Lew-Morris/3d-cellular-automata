@@ -45,7 +45,6 @@ pub fn settings(
             let previous_bounds = bounds;
             let previous_sim = active_sim;
 
-            // todo! Add tooltips to each element in the UI
             // ui.label("https://docs.rs/egui/").on_hover_text("This is a tooltip!");
 
             ui.heading(format!("Information:")).on_hover_text("Information about the current simulation");
