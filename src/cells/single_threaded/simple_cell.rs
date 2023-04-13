@@ -49,7 +49,6 @@ impl SingleThreaded {
             // Initialise vector of cells, with length bounds^3
             self.cells
                 .resize((new_bounds.pow(3)) as usize, SimpleCell::new());
-            // vec!(vec!(SimpleCell { value: 0, neighbours: 0 }));
             self.bounds = new_bounds;
         }
         self.bounds
@@ -124,24 +123,6 @@ impl SingleThreaded {
             self.update_neighbours(rule, index, false);
         }
     }
-
-    // #[allow(dead_code)]
-    // pub fn validate(&self, rule: &Rule) {
-    //     for index in 0..self.cells.len() {
-    //         let pos = self.idx_to_pos(index);
-    //
-    //         let mut neighbours = 0;
-    //         for dir in rule.neighbourhood.get_neighbourhood_iter() {
-    //             let neighbour_pos = self.wrap(pos + *dir);
-    //
-    //             let index = self.pos_to_idx(neighbour_pos);
-    //             if self.cells[index].value == rule.states {
-    //                 neighbours += 1;
-    //             }
-    //         }
-    //         assert_eq!(neighbours, self.cells[index].neighbours);
-    //     }
-    // }
 
     pub fn spawn_noise(&mut self, rule: &Rule) {
         default_noise(get_centre(self.bounds), |pos| {
