@@ -9,7 +9,11 @@ use bevy::{
 use bevy_flycam::prelude::*;
 
 // use crate::cells::multi_threaded;
-use crate::color_method::ColourMethod::*;
+use crate::color_method::ColourMethod::{
+    State,
+    Neighbour,
+    Index,
+};
 use crate::{
     cells::{
         multi_dimensional,
@@ -23,7 +27,11 @@ use crate::{
     rule::{Rule, Value},
 };
 
-pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims: ResMut<Sims>) {
+pub fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut sims: ResMut<Sims>,
+) {
     sims.add_sim(
         "Simple Cell".into(),
         Box::new(single_threaded::SingleThreaded::new()),
@@ -118,8 +126,73 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         colour2: Color::rgb(47.0, 0.0, 255.0),
     });
 
+    sims.add_example(Example {
+        name: "Fancy".into(),
+        rule: Rule {
+            survival: Value::new(&[0,1,2,3,7,8,9,11,13,18,21,22,24,26]),
+            birth: Value::new(&[4,13,17,20,21,22,23,24,26]),
+            states: 4,
+            neighbourhood: Moore,
+        },
+        colour_method: State,
+        colour1: Color::RED,
+        colour2: Color::BLUE,
+    });
+
+    sims.add_example(Example {
+        name: "Crystals".into(),
+        rule: Rule {
+            survival: Value::new(&[5,6,7,8]),
+            birth: Value::new(&[6,7,9]),
+            states: 10,
+            neighbourhood: Moore,
+        },
+        colour_method: State,
+        colour1: Color::GREEN,
+        colour2: Color::BLUE,
+    });
+
+    sims.add_example(Example {
+        name: "Swapping".into(),
+        rule: Rule {
+            survival: Value::new(&[3,6,9]),
+            birth: Value::new(&[4,8,10]),
+            states: 20,
+            neighbourhood: Moore,
+        },
+        colour_method: State,
+        colour1: Color::PINK,
+        colour2: Color::PURPLE,
+    });
+
+    sims.add_example(Example {
+        name: "445".into(),
+        rule: Rule {
+            survival: Value::new(&[4]),
+            birth: Value::new(&[4]),
+            states: 5,
+            neighbourhood: Moore,
+        },
+        colour_method: State,
+        colour1: Color::BLUE,
+        colour2: Color::YELLOW,
+    });
+
+    sims.add_example(Example {
+        name: "Expand and die".into(),
+        rule: Rule {
+            survival: Value::new(&[4]),
+            birth: Value::new(&[3]),
+            states: 20,
+            neighbourhood: Moore,
+        },
+        colour_method: State,
+        colour1: Color::ORANGE,
+        colour2: Color::TEAL,
+    });
+
     // todo! Use RNG to select a random example
-    sims.set_example(2);
+    sims.set_example(0);
 
     // todo! Have a look into transparent cells for demo
     commands.spawn((
@@ -132,7 +205,7 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
                 .map(|(x, y)| InstanceData {
                     position: Vec3::new(x * 10.0 - 5.0, y * 10.0 - 5.0, 0.0),
                     scale: 0.9,
-                    color: Color::hsla(x * 360., y, 0.5, 1.0).as_rgba_f32(),
+                    color: Color::rgba(1.0, 0.5, 0.5, 0.2).into(),
                 })
                 .collect(),
         ),
@@ -140,6 +213,10 @@ pub fn setup(mut commands: Commands, mut meshes: ResMut<Assets<Mesh>>, mut sims:
         ComputedVisibility::default(),
         NoFrustumCulling,
     ));
+
+    // commands.spawn(PbrBundle {
+    //     mesh: meshes.add(Mesh::from())
+    // })
 
     // Spawn Camera
     // https://bevy-cheatbook.github.io/window/clear-color.html
