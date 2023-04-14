@@ -96,7 +96,7 @@ pub struct SimsPlugin;
 impl Plugin for SimsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(Sims::new())
-            .add_system(settings.before(update))
+            .add_system(settings_ui.before(update))
             .add_system(update);
     }
 }
