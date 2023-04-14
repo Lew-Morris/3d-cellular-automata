@@ -2,12 +2,10 @@ use bevy::diagnostic::{FrameTimeDiagnosticsPlugin,};
 use bevy::prelude::*;
 use bevy::window::PresentMode;
 use bevy_egui::EguiPlugin;
-// use bevy_fly_camera::FlyCameraPlugin;
 use bevy_flycam::prelude::*;
 
 use render::*;
 use setup::*;
-// use rotating_camera::RotatingCameraPlugin;
 
 mod cells;
 mod color_method;
@@ -27,8 +25,6 @@ fn main() {
     task_pool_settings.io.percent = 1.0f32;
 
     // todo! add pause functionality
-    // type Paused = bool;
-    // let paused: Paused = true;
 
     App::new()
         // Add default plugins
@@ -38,7 +34,7 @@ fn main() {
             primary_window: Some(Window {
                 title: "3D Cellular Automata".into(),
                 resolution: (1920., 1080.).into(),
-                present_mode: PresentMode::AutoVsync,
+                present_mode: PresentMode::AutoNoVsync,
                 // WASM config
                 fit_canvas_to_parent: true,
                 prevent_default_event_handling: false,
@@ -57,7 +53,7 @@ fn main() {
         // Change FlyCam movement
         .insert_resource(MovementSettings {
             sensitivity: 0.00015, // default: 0.00012
-            speed: 15.0,          // default: 12.0
+            speed: 25.0,          // default: 12.0
         })
         // Change key bindings
         .insert_resource(KeyBindings {
