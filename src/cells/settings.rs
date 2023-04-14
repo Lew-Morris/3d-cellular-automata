@@ -2,22 +2,26 @@ use bevy::diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::{ClearColor, Color, Res, ResMut};
 
 use bevy_egui::egui::FontFamily::Proportional;
-use bevy_egui::egui::{color_picker, FontId, Style, Ui};
+use bevy_egui::egui::{color_picker, FontId, Style, Ui, Vec2};
 use bevy_egui::{
     egui,
     egui::{Checkbox, ComboBox, Grid, Slider, TextStyle::*, Window},
     EguiContexts,
 };
+// use bevy_egui::egui::{SidePanel, panel::Side::Left,};
 
 use crate::neighbours::Neighbourhood::*;
 
 use crate::cells::Sims;
 use crate::color_method::ColourMethod::*;
+use crate::neighbours::Neighbourhood;
+use crate::rule::{Value};
 
-// todo! For each example, add an image to the button, and arrange in a grid
 // todo! Allow the user to save the current simulation as an example
 //  - Would be better to convert current examples to this and add them dynamically
-pub fn settings(
+
+
+pub fn settings_ui(
     mut current: ResMut<Sims>,
     mut contexts: EguiContexts,
     mut clear_color: ResMut<ClearColor>,
@@ -30,6 +34,7 @@ pub fn settings(
     let mut active_sim = current.active_sim;
     // Settings GUI
 
+    // Try this out!
     // SidePanel::new(Left, "Settings")
     Window::new("Settings")
         .resizable(false)
@@ -45,69 +50,8 @@ pub fn settings(
             let previous_bounds = bounds;
             let previous_sim = active_sim;
 
-            // ui.label("https://docs.rs/egui/").on_hover_text("This is a tooltip!");
+            controls_ui(&current, diagnostics, active_sim, ui);
 
-            ui.heading(format!("Information:")).on_hover_text("Information about the current simulation");
-            {
-                ui.group(|ui| {
-                    ui.set_width(275.0);
-                    ui.vertical(|ui| {
-                        let update_dt = current.update_duration;
-                        let cell_count = current.sims[active_sim].1.count();
-                        // Get the current framerate
-                        let fps = diagnostics
-                            .get(FrameTimeDiagnosticsPlugin::FPS)
-                            .unwrap()
-                            .smoothed()
-                            .unwrap_or(0.0);
-
-                        ui.label(format!("Cells: {}", cell_count));
-                        ui.label(format!(
-                            "Update: {:.2?} per cell",
-                            update_dt / cell_count.max(1) as u32
-                        ));
-                        ui.label(format!("Framerate: {:.1?}fps", fps));
-                    });
-
-                    ui.add_space(10.0);
-
-                    ui.heading(format!("Controls:")).on_hover_text("Controls for the simulation");
-                    {
-                        ui.collapsing("Show controls", |ui| {
-                            ui.horizontal(|ui| {
-                                ui.vertical(|ui| {
-                                    ui.label("Lock/ Unlock: ");
-
-                                    ui.end_row();
-                                    ui.add_space(2.0);
-
-                                    // Direction Controls
-                                    ui.label("Direction: ");
-
-                                    ui.end_row();
-                                    ui.add_space(2.0);
-
-                                    ui.label("Up: ");
-
-                                    ui.end_row();
-                                    ui.add_space(2.0);
-
-                                    ui.label("Down: ");
-                                });
-                                ui.vertical(|ui| {
-                                    ui.button("ESC").on_hover_text("Press escape to unlock/ lock the camera movement");
-                                    ui.end_row();
-                                    ui.button("WASD").on_hover_text("Use W to move forward, S to go back, A to go left, and D to go right - how you would do this in most games");
-                                    ui.end_row();
-                                    ui.button("SHIFT").on_hover_text("Press teh Shift key to move the camera upwards");
-                                    ui.end_row();
-                                    ui.button("CTRL").on_hover_text("Press the Ctrl (Control) key to move the camera downwards");
-                                });
-                            });
-                        });
-                    }
-                });
-            }
             ui.add_space(10.0);
 
             ui.heading("Simulator Settings:").on_hover_text("Define the behaviour of the cells");
@@ -142,15 +86,36 @@ pub fn settings(
                         let rule = current.rule.take().unwrap();
                         let sim = &mut current.sims[active_sim].1;
 
+                        // todo! May need to move to function to do this
+                        // let spawn_shortcut = egui::KeyboardShortcut::new(Modifiers::NONE, Key::Space);
+                        // let reset_shortcut = egui::KeyboardShortcut::new(Modifiers::NONE, Key::Backspace);
+                        //
+                        // if  ui.input_mut().consume_shortcut(&reset_shortcut) {
+                        //     sim.reset();
+                        // }
+
                         ui.add_space(10.0);
+
                         ui.horizontal(|ui| {
-                            // Spawn noise
-                            if ui.button("Spawn noise").on_hover_text("Spawn a random amount of cells in the center").clicked() {
+                            ui.set_width(275.0);
+                            // Spawn noise button
+                            if ui
+                                .add(
+                                    egui::Button::new("Spawn Noise")
+                                        // .shortcut_text(ui.ctx().format_shortcut(&spawn_shortcut)),
+                                )
+                                .on_hover_text("Spawn a random amount of cells in the center")
+                                .clicked()
+                            {
                                 sim.spawn_noise(&rule);
                             }
 
-                            // Reset the sim
-                            if ui.button("Reset").on_hover_text("Kill all the cells, and stop the simulation").clicked() {
+                            // Reset sim button
+                            if ui.add(egui::Button::new("Reset")
+                                          // .shortcut_text(ui.ctx().format_shortcut(&reset_shortcut)),
+                            )
+                                .on_hover_text("Kill all the cells, and stop the simulation")
+                                .clicked() {
                                 sim.reset();
                             }
                         });
@@ -178,6 +143,7 @@ pub fn settings(
                 ui.group(|ui| {
                     ui.set_width(275.0);
                     ui.vertical(|ui| {
+                        // Drop down menu
                         ComboBox::from_label("Colour Method")
                             .selected_text(format!("{:?}", current.colour_method))
                             .show_ui(ui, |ui| {
@@ -186,27 +152,40 @@ pub fn settings(
                                     Colour1,
                                     "Colour 1",
                                 ).on_hover_text("Only use the first colour");
+
                                 ui.selectable_value(
                                     &mut current.colour_method,
                                     Colour2,
                                     "Colour 2",
                                 ).on_hover_text("Only use the second colour");
-                                ui.selectable_value(&mut current.colour_method, State, "State");
+
+                                ui.selectable_value(
+                                    &mut current.colour_method,
+                                    State,
+                                    "State"
+                                ).on_hover_text("Cells are coloured based on their state");
+
                                 ui.selectable_value(
                                     &mut current.colour_method,
                                     DistToCenter,
                                     "Distance to Center",
                                 ).on_hover_text("Cells are coloured based on their distance to the centre of the area, the further away, the more of the second colour they are");
+
                                 ui.selectable_value(
                                     &mut current.colour_method,
                                     Neighbour,
                                     "Neighbors",
                                 );
-                                ui.selectable_value(&mut current.colour_method, Index, "Index").on_hover_text("The cell's position denotes where it should be between colour 1 and 2");
+                                ui.selectable_value(
+                                    &mut current.colour_method,
+                                    Index,
+                                    "Index"
+                                ).on_hover_text("The cell's position denotes where it should be between colour 1 and 2");
                             });
 
                         ui.add_space(10.0);
 
+                        // Cell colour pickers
                         ui.label("Cell Colours: ").on_hover_text("Pick the colour of the cells");
                         {
                             colour_picker(ui, &mut current.colour1);
@@ -216,7 +195,7 @@ pub fn settings(
                         ui.add_space(10.0);
 
                         let mut rule = current.rule.take().unwrap();
-                        let previous_rule = rule.clone();
+                        let previous_rule = rule;
 
                         // Set neighbour method
                         ComboBox::from_label("Neighbour Method: ")
@@ -250,45 +229,15 @@ pub fn settings(
                             ui.group(|ui| {
                                 ui.set_width(250.0);
                                 ui.horizontal(|ui| {
+                                    // Get the current rule
+                                    let mut rule = current.rule.unwrap();
+
                                     ui.vertical(|ui| {
                                         ui.set_width(120.0);
-
                                         ui.label("Birth Values: ");
                                         {
-                                            // Birth value checkboxes
-                                            Grid::new("birth_grid").spacing(spacing).show(
-                                                ui,
-                                                |ui| {
-                                                    // ui.add_enabled(false, Checkbox::new(&mut false, "0")); // maybe turn into tooltip
-                                                    // Checkbox for each value
-                                                    for i in 1..=26 {
-                                                        let mut enabled = true;
-                                                        if i > 6
-                                                            && current.rule.unwrap().neighbourhood
-                                                                == VonNeumann
-                                                        {
-                                                            enabled = false;
-                                                        }
-                                                        if ui
-                                                            .add_enabled(
-                                                                enabled,
-                                                                Checkbox::new(
-                                                                    &mut rule.birth.get_value(i),
-                                                                    format!("{}", i),
-                                                                ),
-                                                            )
-                                                            .on_hover_text("Click to select this value. If it is greyed out, try changing the neighbourhood :)").clicked() {
-                                                            rule.birth = rule.birth.change_value(i);
-                                                        }
-                                                        // Every third element, make a new row
-                                                        if i % 3 == 0 {
-                                                            ui.end_row()
-                                                        }
-                                                    }
-                                                    // Update the current rule
-                                                    current.rule = Some(rule);
-                                                },
-                                            );
+                                            rule.birth = value_selector_ui(current.rule.unwrap().neighbourhood, spacing, ui, rule.birth, "birth_grid");
+                                            current.rule = Some(rule);
                                         }
                                     });
                                     ui.add_space(5.0);
@@ -297,42 +246,8 @@ pub fn settings(
                                         ui.set_width(120.0);
                                         ui.label("Survival Values");
                                         {
-                                            Grid::new("survival_grid").spacing(spacing).show(
-                                                ui,
-                                                |ui| {
-                                                    // ui.add_enabled(false, Checkbox::new(&mut false, "0")); // maybe turn into tooltip
-                                                    for i in 1..=26 {
-                                                        let mut enabled = true;
-                                                        if i > 6
-                                                            && current.rule.unwrap().neighbourhood
-                                                                == VonNeumann
-                                                        {
-                                                            enabled = false;
-                                                        }
-                                                        // Checkbox for each value
-                                                        if ui
-                                                            .add_enabled(
-                                                                enabled,
-                                                                Checkbox::new(
-                                                                    &mut rule.survival.get_value(i),
-                                                                    format!("{}", i),
-                                                                ),
-                                                            )
-                                                            .on_hover_text("Click to select this value. If it is greyed out, try changing the neighbourhood :)").clicked() {
-                                                            // Update the value
-                                                            rule.survival =
-                                                                rule.survival.change_value(i);
-                                                        };
-
-                                                        // Every third element, make a new row
-                                                        if i % 3 == 0 {
-                                                            ui.end_row()
-                                                        };
-                                                    }
-                                                    // Update the current rule
-                                                    current.rule = Some(rule);
-                                                },
-                                            );
+                                            rule.survival = value_selector_ui(current.rule.unwrap().neighbourhood, spacing, ui, rule.survival, "survival_grid");
+                                            current.rule = Some(rule);
                                         }
                                     });
                                 });
@@ -349,17 +264,7 @@ pub fn settings(
                 ui.group(|ui| {
                     ui.set_width(275.0);
                     ui.horizontal(|ui| {
-                        Grid::new("examples_grid").show(ui, |ui| {
-                            for i in 0..current.examples.len() {
-                                let example = &current.examples[i];
-                                if ui.add(egui::Button::new(&example.name)).on_hover_text(format!("Change the simulation to {}", &example.name)).clicked() {
-                                    current.set_example(i);
-                                }
-                                if (i + 1) % 2 == 0 {
-                                    ui.end_row();
-                                }
-                            }
-                        });
+                        examples_ui(&mut current, ui);
                     });
                 });
             }
@@ -373,9 +278,125 @@ pub fn settings(
         });
 }
 
+fn examples_ui(current: &mut ResMut<Sims>, ui: &mut Ui) {
+    Grid::new("examples_grid").show(ui, |ui| {
+        for i in 0..current.examples.len() {
+            let example = &current.examples[i];
+            if ui.add(egui::Button::new(&example.name)).on_hover_text(format!("Change the simulation to {}", &example.name)).clicked() {
+                current.set_example(i);
+            }
+            if (i + 1) % 2 == 0 {
+                ui.end_row();
+            }
+        }
+    });
+}
+
+fn value_selector_ui(neighbourhood: Neighbourhood, spacing: Vec2, ui: &mut Ui, mut value: Value, grid_id: &str) -> Value {
+    Grid::new(grid_id).spacing(spacing).show(
+        ui, |ui| {
+            for i in 1..=26 {
+                let mut enabled = true;
+                if i > 6
+                    && neighbourhood
+                    == VonNeumann
+                {
+                    enabled = false;
+                }
+                // Checkbox for each value
+                if ui
+                    .add_enabled(
+                        enabled,
+                        Checkbox::new(
+                            &mut value.get_value(i),
+                            format!("{}", i),
+                        ),
+                    )
+                    .on_hover_text("Click to select this value. If it is greyed out, try changing the neighbourhood :)").clicked() {
+                    // Update the value
+                    value = value.change_value(i);
+                };
+
+                // Every third element, make a new row
+                if i % 3 == 0 {
+                    ui.end_row()
+                };
+            }
+        },
+    );
+    // Return the new value
+    value
+}
+
+
+fn controls_ui(current: &ResMut<Sims>, diagnostics: Res<Diagnostics>, active_sim: usize, ui: &mut Ui) {
+    ui.heading("Information:").on_hover_text("Information about the current simulation");
+    {
+        ui.group(|ui| {
+            ui.set_width(275.0);
+            ui.vertical(|ui| {
+                let update_dt = current.update_duration;
+                let cell_count = current.sims[active_sim].1.count();
+                // Get the current framerate
+                let fps = diagnostics
+                    .get(FrameTimeDiagnosticsPlugin::FPS)
+                    .unwrap()
+                    .smoothed()
+                    .unwrap_or(0.0);
+
+                ui.label(format!("Cells: {}", cell_count));
+                ui.label(format!(
+                    "Update: {:.2?} per cell",
+                    update_dt / cell_count.max(1) as u32
+                ));
+                ui.label(format!("Framerate: {:.1?}fps", fps));
+            });
+
+            ui.add_space(10.0);
+
+            // todo! Move to new window
+            ui.heading("Controls:").on_hover_text("Controls for the simulation");
+            {
+                ui.collapsing("Show controls", |ui| {
+                    ui.horizontal(|ui| {
+                        ui.vertical(|ui| {
+                            ui.label("Lock/ Unlock: ");
+
+                            ui.end_row();
+                            ui.add_space(2.0);
+
+                            // Direction Controls
+                            ui.label("Direction: ");
+
+                            ui.end_row();
+                            ui.add_space(2.0);
+
+                            ui.label("Up: ");
+
+                            ui.end_row();
+                            ui.add_space(2.0);
+
+                            ui.label("Down: ");
+                        });
+                        ui.vertical(|ui| {
+                            ui.button("ESC").on_hover_text("Press escape to unlock/ lock the camera movement");
+                            ui.end_row();
+                            ui.button("WASD").on_hover_text("Use W to move forward, S to go back, A to go left, and D to go right - how you would do this in most games");
+                            ui.end_row();
+                            ui.button("SHIFT").on_hover_text("Press teh Shift key to move the camera upwards");
+                            ui.end_row();
+                            ui.button("CTRL").on_hover_text("Press the Ctrl (Control) key to move the camera downwards");
+                        });
+                    });
+                });
+            }
+        });
+    }
+}
+
 fn ui_style(mut style: &mut Style) -> Style {
     style.text_styles = [
-        (Heading, FontId::new(20.0, Proportional)),
+        (Heading, FontId::new(14.0, Proportional)),
         (Name("Heading2".into()), FontId::new(16.0, Proportional)),
         (Name("Context".into()), FontId::new(16.0, Proportional)),
         (Body, FontId::new(14.0, Proportional)),
@@ -389,6 +410,7 @@ fn ui_style(mut style: &mut Style) -> Style {
     style.to_owned()
 }
 
+// Source: TanTanDev
 fn colour_picker(ui: &mut Ui, colour: &mut Color) {
     let mut c = [
         (colour.r() * 255.0) as u8,
