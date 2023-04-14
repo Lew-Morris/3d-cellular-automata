@@ -3,7 +3,6 @@ use bevy::prelude::Color;
 use utilities::state_colour;
 use ColourMethod::{Colour1, Colour2, DistToCenter, Index, Neighbour, State};
 
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ColourMethod {
     Colour1,
@@ -14,6 +13,7 @@ pub enum ColourMethod {
     Index,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl ColourMethod {
     // Set the colour method
     pub fn set_colour(
