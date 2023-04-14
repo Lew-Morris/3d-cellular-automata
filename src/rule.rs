@@ -13,6 +13,7 @@ impl Value {
         result
     }
 
+    // Generate a new value from a range
     pub fn from_range(indices: RangeInclusive<u8>) -> Self {
         let mut result = Value([false; 27]);
         for index in indices {
@@ -21,6 +22,7 @@ impl Value {
         result
     }
 
+    // Check if a value is valid, i.e. is true
     pub fn is_valid(&self, value: u8) -> bool {
         if (value as usize) < self.0.len() {
             *self.0.get(value as usize).unwrap()
@@ -29,11 +31,13 @@ impl Value {
         }
     }
 
+    // Change the state of a value
     pub fn change_value(mut self, index: usize) -> Self {
         self.0[index] = !self.0[index];
         return self;
     }
 
+    // Get a specified value
     pub fn get_value(self, index: usize) -> bool {
         self.0[index]
     }
