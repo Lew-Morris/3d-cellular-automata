@@ -1,4 +1,3 @@
-// use std::thread::spawn;
 use crate::{
     render::CellRenderer,
     rule::Rule,
@@ -31,7 +30,7 @@ impl Position {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub struct SimpleCell {
     state: u8,
     neighbours: u8,

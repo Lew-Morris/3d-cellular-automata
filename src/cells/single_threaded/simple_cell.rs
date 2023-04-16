@@ -94,6 +94,7 @@ impl SingleThreaded {
         }
     }
 
+    // Update the cells
     pub fn update(&mut self, rule: &Rule) {
         let mut spawns = vec![];
         let mut deaths = vec![];

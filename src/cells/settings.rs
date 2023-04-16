@@ -278,6 +278,7 @@ pub fn settings_ui(
         });
 }
 
+// Add buttons to change sims
 fn examples_ui(current: &mut ResMut<Sims>, ui: &mut Ui) {
     Grid::new("examples_grid").show(ui, |ui| {
         for i in 0..current.examples.len() {
