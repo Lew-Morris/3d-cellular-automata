@@ -1,6 +1,5 @@
-use bevy::prelude::IntoSystemConfig;
 use bevy::{
-    prelude::{Color, Plugin, Query, ResMut, Resource},
+    prelude::{Color, Plugin, Query, ResMut, Resource, IntoSystemConfig},
     tasks::AsyncComputeTaskPool,
 };
 
