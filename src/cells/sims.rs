@@ -103,7 +103,6 @@ impl Plugin for SimsPlugin {
 pub fn update(
     mut current: ResMut<Sims>,
     mut query: Query<&mut InstanceMaterialData>,
-    // mut contexts: EguiContexts,
 ) {
     if current.active_sim > current.sims.len() {
         current.set_sim(0);
@@ -152,4 +151,83 @@ pub fn update(
     current.update_duration = update_dt;
     current.renderer = Some(renderer);
     current.rule = Some(rule);
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::cells::{multi_dimensional};
+    use crate::neighbours::Neighbourhood::*;
+    use crate::rule::Value;
+    use super::*;
+
+    #[test]
+    fn test_new_sims() {
+        let sims = Sims::new();
+        assert_eq!(sims.sims.len(), 0);
+        assert_eq!(sims.active_sim, usize::MAX);
+        assert_eq!(sims.bounds, 50);
+        assert_eq!(sims.update_duration.as_nanos(), 0);
+        assert!(sims.renderer.is_some());
+        assert!(sims.rule.is_none());
+        assert_eq!(sims.colour_method, ColourMethod::DistToCenter);
+        assert_eq!(sims.colour1, Color::NONE);
+        assert_eq!(sims.colour2, Color::NONE);
+        assert_eq!(sims.examples.len(), 0);
+    }
+
+    #[test]
+    fn test_add_sim() {
+        let mut sims = Sims::new();
+        let name = String::from("TestSim");
+        let sim = Box::new(multi_dimensional::MultiDimensional::new());
+        sims.add_sim(name.clone(), sim);
+        assert_eq!(sims.sims.len(), 1);
+        assert_eq!(sims.sims[0].0, name);
+    }
+
+    #[test]
+    fn test_add_example() {
+        let mut sims = Sims::new();
+        let example = Example {
+            name: "TestExample".into(),
+            rule: Rule {
+                survival: Value::new(&[4]),
+                birth: Value::new(&[4]),
+                states: 5,
+                neighbourhood: Moore,
+            },
+            colour_method: ColourMethod::DistToCenter,
+            colour1: Color::RED,
+            colour2: Color::BLUE,
+        };
+        sims.add_example(example);
+        assert_eq!(sims.examples.len(), 1);
+        assert_eq!(sims.examples[0].name, String::from("TestExample"));
+    }
+
+    #[test]
+    fn test_set_example() {
+        let mut sims = Sims::new();
+        let rule = Rule {
+            survival: Value::new(&[4]),
+            birth: Value::new(&[4]),
+            states: 5,
+            neighbourhood: Moore,
+        };
+        let example = Example {
+            name: "TestExample".into(),
+            rule,
+            colour_method: ColourMethod::DistToCenter,
+            colour1: Color::RED,
+            colour2: Color::BLUE,
+        };
+        let sim = Box::new(multi_dimensional::MultiDimensional::new());
+        sims.add_sim("TestSim".into(), sim);
+        sims.add_example(example);
+        sims.set_example(0);
+        assert_eq!(sims.colour_method, ColourMethod::DistToCenter);
+        assert_eq!(sims.colour1, Color::RED);
+        assert_eq!(sims.colour2, Color::BLUE);
+        assert_eq!(sims.rule.unwrap(), rule);
+    }
 }

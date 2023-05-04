@@ -1128,6 +1128,7 @@ dependencies = [
 name = "cellular_automata"
 version = "0.2.2"
 dependencies = [
+ "approx",
  "bevy",
  "bevy_egui",
  "bevy_flycam",
