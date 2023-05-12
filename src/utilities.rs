@@ -4,6 +4,7 @@ use bevy::{
 };
 use rand::Rng;
 
+// Adapted from TanTanDev
 pub fn idx_to_pos(index: i32, bounds: i32) -> IVec3 {
     // The index to position conversion was broken
 

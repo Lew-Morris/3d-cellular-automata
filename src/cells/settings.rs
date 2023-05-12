@@ -20,7 +20,7 @@ use crate::rule::{Value};
 // todo! Allow the user to save the current simulation as an example
 //  - Would be better to convert current examples to this and add them dynamically
 
-
+// Adapted from TanTanDev
 pub fn settings_ui(
     mut current: ResMut<Sims>,
     mut contexts: EguiContexts,

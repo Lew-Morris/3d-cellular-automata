@@ -11,11 +11,11 @@ mod cells;
 mod color_method;
 mod neighbours;
 mod render;
-mod rotating_camera;
 mod rule;
 mod setup;
 mod utilities;
 
+// Adapted from TanTanDev
 fn main() {
     //
     let mut task_pool_settings = TaskPoolOptions::default();

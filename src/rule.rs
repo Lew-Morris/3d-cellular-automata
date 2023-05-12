@@ -1,6 +1,7 @@
 use crate::neighbours::Neighbourhood;
 use std::ops::RangeInclusive;
 
+// Adapted from TanTanDev
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Value([bool; 27]);
 

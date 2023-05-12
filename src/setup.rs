@@ -27,6 +27,7 @@ use crate::{
     rule::{Rule, Value},
 };
 
+// Adapted from TanTanDev
 pub fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,

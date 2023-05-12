@@ -3,6 +3,7 @@ use bevy::prelude::Color;
 use utilities::state_colour;
 use ColourMethod::{Colour1, Colour2, DistToCenter, Index, Neighbour, State};
 
+// Adapted from TanTanDev
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ColourMethod {
     Colour1,

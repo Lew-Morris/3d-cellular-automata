@@ -1,5 +1,6 @@
 use bevy::math::IVec3;
 
+// Adapted from TanTanDev
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Neighbourhood {
     VonNeumann,
